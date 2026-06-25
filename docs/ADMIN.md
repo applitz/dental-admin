@@ -2,17 +2,18 @@
 
 [API module](https://github.com/applitz/dental-api/blob/main/docs/modules/M-platform-admin.md)
 
+**Production URL:** `https://admin.vodett.ai` (no path prefix)
+
 ## Routes
 
 | Path | Purpose |
 |------|---------|
-| `/auth/callback` | Receives login from `app.vodett.ai` |
+| `/auth/callback` | Receives login tokens from `app.vodett.ai` |
 | `/[locale]/challenge` | Platform secret key |
 | `/[locale]` | Dashboard |
 | `/[locale]/tenants` | Tenant list |
-| `/[locale]/countries` | Country rollout |
+| `/[locale]/markets` | Market rollout |
 | `/[locale]/settings` | Runtime config |
-| `/[locale]/features` | Feature flags |
 | `/[locale]/audit` | Platform audit log |
 
 ## Env
@@ -21,14 +22,7 @@
 |----------|---------|
 | `NEXT_PUBLIC_API_URL` | `https://api.vodett.ai` |
 | `NEXT_PUBLIC_CLINIC_APP_URL` | `https://app.vodett.ai` |
-| `NEXT_PUBLIC_COOKIE_DOMAIN` | `.vodett.ai` (prod) |
 
-## Phase status
+## Cross-app login
 
-| Phase | Status |
-|-------|--------|
-| 0 Scaffold | ✅ This repo |
-| 1 Auth + gate | 🔲 API + login redirect |
-| 2 Tenants read-only | 🔲 |
-| 3 Country wizard | 🔲 |
-| 4 Settings from env | 🔲 |
+`dental-web` sets `NEXT_PUBLIC_ADMIN_APP_URL=https://admin.vodett.ai` so platform admins are sent here after login.

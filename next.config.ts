@@ -6,7 +6,6 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  basePath: "/admin",
 };
 
 export default withNextIntl(nextConfig);
