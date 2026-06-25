@@ -1,7 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { clearSession, clinicLoginUrl, hasPlatformSession, setGateToken } from "@/lib/auth";
+import {
+  hasPlatformSession,
+  redirectToClinicLogin,
+  setGateToken,
+} from "@/lib/auth";
 import { fetchGateStatus, verifyPlatformGate } from "@/lib/api";
 import { gateChallengeErrorKey } from "@/lib/gate-errors";
 import { Shield } from "lucide-react";
@@ -18,10 +22,11 @@ export default function ChallengePage() {
   const [loading, setLoading] = useState(false);
   const [gateReady, setGateReady] = useState<boolean | null>(null);
 
-  function goToLogin() {
-    clearSession();
-    window.location.href = clinicLoginUrl(locale, { reauth: true });
-  }
+  useEffect(() => {
+    if (!hasPlatformSession()) {
+      redirectToClinicLogin(locale, { reauth: true });
+    }
+  }, [locale]);
 
   useEffect(() => {
     if (!hasPlatformSession()) return;
@@ -34,16 +39,7 @@ export default function ChallengePage() {
   }, [t]);
 
   if (!hasPlatformSession()) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-6">
-        <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <p className="text-sm text-slate-600">{t("noSession")}</p>
-          <Button className="mt-4 w-full" onClick={goToLogin}>
-            {t("goToLogin")}
-          </Button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -55,7 +51,12 @@ export default function ChallengePage() {
       setGateToken(result.gate_token);
       router.replace(`/${locale}`);
     } catch (err) {
-      setError(t(gateChallengeErrorKey(err)));
+      const key = gateChallengeErrorKey(err);
+      if (key === "sessionExpired" || key === "forbidden") {
+        redirectToClinicLogin(locale, { reauth: true });
+        return;
+      }
+      setError(t(key));
     } finally {
       setLoading(false);
     }
@@ -88,7 +89,7 @@ export default function ChallengePage() {
           type="button"
           variant="ghost"
           className="mt-2 w-full"
-          onClick={goToLogin}
+          onClick={() => redirectToClinicLogin(locale, { reauth: true })}
           disabled={loading}
         >
           {t("backToLogin")}

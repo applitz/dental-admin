@@ -17,7 +17,7 @@ import {
   type PlatformMarketSummary,
   type PlatformSettingItem,
 } from "@/lib/platform-api";
-import { clearSession, clinicLoginUrl, hasGateAccess } from "@/lib/auth";
+import { hasGateAccess, redirectToClinicLogin } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Activity, Globe, LayoutDashboard, Shield, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -92,10 +92,7 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
             variant="ghost"
             size="sm"
             className="w-full text-admin-100 hover:bg-white/10 hover:text-white"
-            onClick={() => {
-              clearSession();
-              window.location.href = clinicLoginUrl(locale, { reauth: true });
-            }}
+            onClick={() => redirectToClinicLogin(locale, { reauth: true })}
           >
             {t("common.signOut")}
           </Button>

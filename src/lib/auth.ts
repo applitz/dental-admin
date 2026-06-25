@@ -47,3 +47,8 @@ export function clinicLoginUrl(locale = "en", options?: { reauth?: boolean }): s
   const url = `${base.replace(/\/$/, "")}/${locale}/login`;
   return options?.reauth ? `${url}?reauth=1` : url;
 }
+
+export function redirectToClinicLogin(locale = "en", options?: { reauth?: boolean }): void {
+  clearSession();
+  window.location.href = clinicLoginUrl(locale, options);
+}

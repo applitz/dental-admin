@@ -1,16 +1,15 @@
 "use client";
 
-import { setTokens } from "@/lib/auth";
+import { redirectToClinicLogin, setTokens } from "@/lib/auth";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect } from "react";
 
 function CallbackContent() {
   const t = useTranslations("auth");
   const router = useRouter();
   const params = useParams();
   const locale = String(params.locale ?? "en");
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
@@ -25,10 +24,9 @@ function CallbackContent() {
       return;
     }
 
-    setError(t("callbackError"));
-  }, [router, t, locale]);
+    redirectToClinicLogin(localeFromHash, { reauth: true });
+  }, [router, locale]);
 
-  if (error) return <p className="text-sm text-red-600">{error}</p>;
   return <p className="text-sm text-slate-600">{t("redirecting")}</p>;
 }
 

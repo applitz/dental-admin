@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminShell, type AdminView } from "@/components/admin-shell";
-import { hasGateAccess, hasPlatformSession } from "@/lib/auth";
+import { hasGateAccess, hasPlatformSession, redirectToClinicLogin } from "@/lib/auth";
 import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -17,7 +17,11 @@ export default function SectionPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!hasPlatformSession() || !hasGateAccess()) {
+    if (!hasPlatformSession()) {
+      redirectToClinicLogin(locale, { reauth: true });
+      return;
+    }
+    if (!hasGateAccess()) {
       router.replace(`/${locale}/challenge`);
       return;
     }

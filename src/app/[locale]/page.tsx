@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminShell } from "@/components/admin-shell";
-import { hasGateAccess, hasPlatformSession } from "@/lib/auth";
+import { hasGateAccess, hasPlatformSession, redirectToClinicLogin } from "@/lib/auth";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,7 +13,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!hasPlatformSession()) {
-      router.replace(`/${locale}/challenge`);
+      redirectToClinicLogin(locale, { reauth: true });
       return;
     }
     if (!hasGateAccess()) {
