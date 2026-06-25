@@ -6,10 +6,8 @@ import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-const STEPS = ["identity", "locales", "sms", "features", "golive"] as const;
+const STEPS = ["country", "sms"] as const;
 type Step = (typeof STEPS)[number];
-
-const COMMON_LOCALES = ["en", "de", "fr", "it", "es", "nl", "pl", "tr"];
 
 type WizardProps = {
   featureCatalog: string[];
@@ -18,58 +16,40 @@ type WizardProps = {
   onCancel: () => void;
 };
 
-export function MarketWizard({ featureCatalog, initial, onDone, onCancel }: WizardProps) {
+export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
   const t = useTranslations("markets");
   const isEdit = Boolean(initial);
-  const [step, setStep] = useState<Step>("identity");
+  const [step, setStep] = useState<Step>("country");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [iso2, setIso2] = useState(initial?.iso2 ?? "");
   const [name, setName] = useState(initial?.name ?? "");
-  const [timezone, setTimezone] = useState(initial?.default_timezone ?? "Europe/Berlin");
-  const [currency, setCurrency] = useState(initial?.default_currency ?? "EUR");
+  const [timezone, setTimezone] = useState(initial?.default_timezone ?? "UTC");
+  const [currency, setCurrency] = useState(initial?.default_currency ?? "USD");
   const [dialCode, setDialCode] = useState(initial?.default_dial_code ?? "");
   const [compliance, setCompliance] = useState(initial?.compliance_notes ?? "");
-  const [isActive, setIsActive] = useState(initial?.is_active ?? false);
-
-  const [locales, setLocales] = useState(
-    initial?.locales ?? [
-      { locale: "en", is_default: true, enabled: true },
-      { locale: "de", is_default: false, enabled: true },
-    ],
-  );
 
   const [smsSenders, setSmsSenders] = useState(
     initial?.sms_senders ?? [
-      { purpose: "patient", sender_type: "alphanumeric", sender_id: "Vodett", twilio_messaging_service_sid: null, is_default: true },
-      { purpose: "otp", sender_type: "alphanumeric", sender_id: "Vodett", twilio_messaging_service_sid: null, is_default: true },
+      {
+        purpose: "patient",
+        sender_type: "alphanumeric",
+        sender_id: "",
+        twilio_messaging_service_sid: null,
+        is_default: true,
+      },
+      {
+        purpose: "otp",
+        sender_type: "alphanumeric",
+        sender_id: "",
+        twilio_messaging_service_sid: null,
+        is_default: true,
+      },
     ],
   );
 
-  const [features, setFeatures] = useState(
-    initial?.features ??
-      featureCatalog.map((key) => ({ feature_key: key, enabled: true, rollout_percent: 100 })),
-  );
-
   const stepIndex = STEPS.indexOf(step);
-
-  const toggleLocale = (locale: string) => {
-    const exists = locales.find((l) => l.locale === locale);
-    if (exists) {
-      setLocales(locales.filter((l) => l.locale !== locale));
-    } else {
-      setLocales([...locales, { locale, is_default: locales.length === 0, enabled: true }]);
-    }
-  };
-
-  const setDefaultLocale = (locale: string) => {
-    setLocales(locales.map((l) => ({ ...l, is_default: l.locale === locale })));
-  };
-
-  const toggleFeature = (key: string) => {
-    setFeatures(features.map((f) => (f.feature_key === key ? { ...f, enabled: !f.enabled } : f)));
-  };
 
   const payload = () => ({
     iso2: iso2.toUpperCase(),
@@ -78,10 +58,9 @@ export function MarketWizard({ featureCatalog, initial, onDone, onCancel }: Wiza
     default_currency: currency,
     default_dial_code: dialCode || null,
     compliance_notes: compliance || null,
-    is_active: isActive,
-    locales,
-    sms_senders: smsSenders,
-    features,
+    locales: initial?.locales ?? [{ locale: "en", is_default: true, enabled: true }],
+    sms_senders: smsSenders.filter((s) => s.sender_id.trim().length > 0),
+    features: initial?.features ?? [],
   });
 
   const submit = async () => {
@@ -120,8 +99,9 @@ export function MarketWizard({ featureCatalog, initial, onDone, onCancel }: Wiza
       </div>
 
       <div className="space-y-4 p-6">
-        {step === "identity" && (
+        {step === "country" && (
           <>
+            <p className="text-sm text-slate-500">{t("wizard.countryHint")}</p>
             <Field label={t("fields.iso2")}>
               <input
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
@@ -132,64 +112,50 @@ export function MarketWizard({ featureCatalog, initial, onDone, onCancel }: Wiza
               />
             </Field>
             <Field label={t("fields.name")}>
-              <input className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value={name} onChange={(e) => setName(e.target.value)} />
+              <input
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </Field>
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label={t("fields.timezone")}>
-                <input className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+                <input
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                />
               </Field>
               <Field label={t("fields.currency")}>
-                <input className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" maxLength={3} value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} />
+                <input
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  maxLength={3}
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                />
               </Field>
               <Field label={t("fields.dialCode")}>
-                <input className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value={dialCode} onChange={(e) => setDialCode(e.target.value)} placeholder="+49" />
+                <input
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  value={dialCode}
+                  onChange={(e) => setDialCode(e.target.value)}
+                  placeholder="+49"
+                />
               </Field>
             </div>
             <Field label={t("fields.compliance")}>
-              <textarea className="w-full min-h-[80px] rounded-lg border border-slate-200 px-3 py-2 text-sm" value={compliance} onChange={(e) => setCompliance(e.target.value)} />
+              <textarea
+                className="w-full min-h-[80px] rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                value={compliance}
+                onChange={(e) => setCompliance(e.target.value)}
+              />
             </Field>
           </>
         )}
 
-        {step === "locales" && (
-          <div>
-            <p className="mb-3 text-sm text-slate-500">{t("wizard.localesHint")}</p>
-            <div className="flex flex-wrap gap-2">
-              {COMMON_LOCALES.map((loc) => {
-                const active = locales.some((l) => l.locale === loc);
-                return (
-                  <button
-                    key={loc}
-                    type="button"
-                    onClick={() => toggleLocale(loc)}
-                    className={cn(
-                      "rounded-full px-3 py-1 text-sm",
-                      active ? "bg-admin-600 text-white" : "bg-slate-100 text-slate-600",
-                    )}
-                  >
-                    {loc}
-                  </button>
-                );
-              })}
-            </div>
-            {locales.length > 0 && (
-              <ul className="mt-4 space-y-2">
-                {locales.map((l) => (
-                  <li key={l.locale} className="flex items-center gap-3 text-sm">
-                    <span className="font-medium uppercase">{l.locale}</span>
-                    <label className="flex items-center gap-1">
-                      <input type="radio" name="defaultLocale" checked={l.is_default} onChange={() => setDefaultLocale(l.locale)} />
-                      {t("fields.defaultLocale")}
-                    </label>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-
         {step === "sms" && (
           <div className="space-y-4">
+            <p className="text-sm text-slate-500">{t("wizard.smsHint")}</p>
             {smsSenders.map((sms, idx) => (
               <div key={idx} className="rounded-lg border border-slate-100 p-4">
                 <p className="text-xs font-semibold uppercase text-slate-400">{sms.purpose}</p>
@@ -212,10 +178,26 @@ export function MarketWizard({ featureCatalog, initial, onDone, onCancel }: Wiza
                   <Field label={t("fields.senderId")}>
                     <input
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      placeholder={t("fields.senderIdPlaceholder")}
                       value={sms.sender_id}
                       onChange={(e) => {
                         const next = [...smsSenders];
                         next[idx] = { ...sms, sender_id: e.target.value };
+                        setSmsSenders(next);
+                      }}
+                    />
+                  </Field>
+                  <Field label={t("fields.messagingSid")}>
+                    <input
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
+                      placeholder={t("fields.messagingSidPlaceholder")}
+                      value={sms.twilio_messaging_service_sid ?? ""}
+                      onChange={(e) => {
+                        const next = [...smsSenders];
+                        next[idx] = {
+                          ...sms,
+                          twilio_messaging_service_sid: e.target.value || null,
+                        };
                         setSmsSenders(next);
                       }}
                     />
@@ -226,45 +208,30 @@ export function MarketWizard({ featureCatalog, initial, onDone, onCancel }: Wiza
           </div>
         )}
 
-        {step === "features" && (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {features.map((f) => (
-              <label key={f.feature_key} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-100 px-3 py-2 text-sm">
-                <input type="checkbox" checked={f.enabled} onChange={() => toggleFeature(f.feature_key)} />
-                <span>{f.feature_key}</span>
-              </label>
-            ))}
-          </div>
-        )}
-
-        {step === "golive" && (
-          <div className="space-y-4">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-              {t("fields.isActive")}
-            </label>
-            <p className="text-sm text-slate-500">{t("wizard.goLiveHint")}</p>
-          </div>
-        )}
-
         {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
 
       <div className="flex justify-between border-t border-slate-100 px-6 py-4">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button type="button" variant="ghost" onClick={onCancel}>
           {t("cancel")}
         </Button>
         <div className="flex gap-2">
           {stepIndex > 0 && (
-            <Button variant="ghost" onClick={() => setStep(STEPS[stepIndex - 1])}>
+            <Button type="button" variant="secondary" onClick={() => setStep(STEPS[stepIndex - 1])}>
               {t("back")}
             </Button>
           )}
           {stepIndex < STEPS.length - 1 ? (
-            <Button onClick={() => setStep(STEPS[stepIndex + 1])}>{t("next")}</Button>
+            <Button
+              type="button"
+              onClick={() => setStep(STEPS[stepIndex + 1])}
+              disabled={step === "country" && (iso2.length !== 2 || name.trim().length < 2)}
+            >
+              {t("next")}
+            </Button>
           ) : (
-            <Button onClick={() => void submit()} disabled={saving}>
-              {saving ? t("saving") : isEdit ? t("save") : t("launch")}
+            <Button type="button" onClick={() => void submit()} disabled={saving || iso2.length !== 2}>
+              {saving ? t("saving") : isEdit ? t("save") : t("save")}
             </Button>
           )}
         </div>

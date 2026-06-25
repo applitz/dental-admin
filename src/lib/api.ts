@@ -77,6 +77,13 @@ export async function verifyPlatformGate(secret: string): Promise<{ gate_token: 
   });
 }
 
+export async function patchTenant(id: string, body: { is_active: boolean }): Promise<TenantDetail> {
+  return apiFetch(`/api/v1/platform/tenants/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
 export type TenantSummary = {
   id: string;
   name: string;
@@ -168,6 +175,7 @@ export type PlatformMarketSummary = {
   launched_at: string | null;
   locale_count: number;
   feature_count: number;
+  sms_count?: number;
 };
 
 export type PlatformMarketDetail = PlatformMarketSummary & {

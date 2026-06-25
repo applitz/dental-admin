@@ -1,9 +1,13 @@
 "use client";
 
+import { FeaturesView } from "@/components/features-view";
+import { SystemView } from "@/components/system-view";
+import { TenantDetailPanel } from "@/components/tenant-detail-panel";
 import { MarketWizard } from "@/components/market-wizard";
 import { SettingsPanel } from "@/components/settings-panel";
 import { Button } from "@/components/ui/button";
-import { listTenants, getTenant, listAuditLogs, type TenantSummary, type TenantDetail, type AuditLogItem } from "@/lib/api";
+import { listTenants, getTenant, type TenantSummary, type TenantDetail } from "@/lib/api";
+import { deleteMarket } from "@/lib/platform-actions";
 import {
   fetchPlatformHealth,
   getMarket,
@@ -13,12 +17,11 @@ import {
   type PlatformMarketSummary,
   type PlatformSettingItem,
 } from "@/lib/platform-api";
-import { clearSession, hasGateAccess } from "@/lib/auth";
+import { clearSession, clinicLoginUrl, hasGateAccess } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Activity, Globe, LayoutDashboard, Shield, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 export type AdminView = "dashboard" | "tenants" | "markets" | "features" | "settings" | "audit" | "system";
@@ -36,7 +39,6 @@ const NAV: { id: AdminView; href: string }[] = [
 export function AdminShell({ initialView }: { initialView: AdminView }) {
   const t = useTranslations();
   const locale = useLocale();
-  const router = useRouter();
   const [view, setView] = useState(initialView);
   const [tenants, setTenants] = useState<TenantSummary[]>([]);
   const [health, setHealth] = useState({ settings_count: 0, markets_count: 0, active_markets: 0 });
@@ -92,7 +94,7 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
             className="w-full text-admin-100 hover:bg-white/10 hover:text-white"
             onClick={() => {
               clearSession();
-              router.replace(`${base}/challenge`);
+              window.location.href = clinicLoginUrl(locale, { reauth: true });
             }}
           >
             {t("common.signOut")}
@@ -104,13 +106,21 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
         {view === "dashboard" && (
           <DashboardView count={tenants.length} activeMarkets={health.active_markets} settingsCount={health.settings_count} />
         )}
-        {view === "tenants" && <TenantsView tenants={tenants} />}
+        {view === "tenants" && (
+          <TenantsView
+            tenants={tenants}
+            onRefresh={() => {
+              void listTenants()
+                .then((r) => setTenants(r.items))
+                .catch(() => setTenants([]));
+            }}
+          />
+        )}
         {view === "markets" && <MarketsView />}
         {view === "settings" && <SettingsView />}
         {view === "audit" && <AuditView />}
-        {!["dashboard", "tenants", "markets", "settings", "audit"].includes(view) && (
-          <Placeholder title={t(`nav.${view}`)} phase="5–6" />
-        )}
+        {view === "features" && <FeaturesView />}
+        {view === "system" && <SystemView />}
       </main>
     </div>
   );
@@ -152,7 +162,7 @@ function Stat({ icon: Icon, label, value }: { icon: typeof Users; label: string;
   );
 }
 
-function TenantsView({ tenants }: { tenants: TenantSummary[] }) {
+function TenantsView({ tenants, onRefresh }: { tenants: TenantSummary[]; onRefresh: () => void }) {
   const t = useTranslations("tenants");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<TenantDetail | null>(null);
@@ -179,7 +189,13 @@ function TenantsView({ tenants }: { tenants: TenantSummary[] }) {
         {loadingDetail || !detail ? (
           <p className="text-sm text-slate-500">{t("loadingDetail")}</p>
         ) : (
-          <TenantDetailView detail={detail} />
+          <TenantDetailPanel
+            detail={detail}
+            onUpdated={(updated) => {
+              setDetail(updated);
+              onRefresh();
+            }}
+          />
         )}
       </div>
     );
@@ -225,121 +241,16 @@ function TenantsView({ tenants }: { tenants: TenantSummary[] }) {
   );
 }
 
-function TenantDetailView({ detail }: { detail: TenantDetail }) {
-  const t = useTranslations("tenants");
-  return (
-    <div>
-      <h1 className="text-2xl font-semibold">{detail.name}</h1>
-      <p className="mt-1 text-sm text-slate-500">{detail.slug}</p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-          <p className="text-slate-500">{t("detailMarket")}</p>
-          <p className="mt-1 font-medium">{detail.market_iso2 ?? "—"}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-          <p className="text-slate-500">{t("detailUsers")}</p>
-          <p className="mt-1 font-medium">{detail.user_count}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-          <p className="text-slate-500">{t("detailPlan")}</p>
-          <p className="mt-1 font-medium">{detail.plan_slug ?? "—"}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-          <p className="text-slate-500">{t("detailOnboarding")}</p>
-          <p className="mt-1 font-medium">
-            {detail.onboarding_step == null ? t("onboardingComplete") : `Step ${detail.onboarding_step}`}
-          </p>
-        </div>
-      </div>
-      {detail.practices.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold uppercase text-slate-500">{t("detailPractices")}</h2>
-          <table className="mt-3 w-full rounded-xl border border-slate-200 bg-white text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-2 text-left">{t("colName")}</th>
-                <th className="px-4 py-2 text-left">{t("colCountry")}</th>
-                <th className="px-4 py-2 text-left">{t("colLocale")}</th>
-                <th className="px-4 py-2 text-left">{t("colComms")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {detail.practices.map((p) => (
-                <tr key={p.id}>
-                  <td className="px-4 py-2">{p.name}</td>
-                  <td className="px-4 py-2">{p.country_code ?? "—"}</td>
-                  <td className="px-4 py-2">{p.locale_default}</td>
-                  <td className="px-4 py-2">{p.comms_email ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-      {detail.features.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-sm font-semibold uppercase text-slate-500">{t("detailFeatures")}</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {detail.features.map((f) => (
-              <span
-                key={f.feature_key}
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs",
-                  f.enabled ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500",
-                )}
-              >
-                {f.feature_key}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
-  );
-}
-
 function AuditView() {
   const t = useTranslations("audit");
-  const [items, setItems] = useState<AuditLogItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    void listAuditLogs()
-      .then((r) => setItems(r.items))
-      .catch(() => setItems([]))
-      .finally(() => setLoading(false));
-  }, []);
 
   return (
     <div>
       <h1 className="text-2xl font-semibold">{t("title")}</h1>
       <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
-      {loading ? (
-        <p className="mt-8 text-sm text-slate-500">{t("loading")}</p>
-      ) : items.length === 0 ? (
-        <p className="mt-8 text-sm text-slate-500">{t("empty")}</p>
-      ) : (
-        <table className="mt-6 w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-3 text-left">{t("colTime")}</th>
-              <th className="px-4 py-3 text-left">{t("colAction")}</th>
-              <th className="px-4 py-3 text-left">{t("colResource")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {items.map((row) => (
-              <tr key={row.id}>
-                <td className="px-4 py-3 text-slate-500">{new Date(row.created_at).toLocaleString()}</td>
-                <td className="px-4 py-3 font-medium">{row.action}</td>
-                <td className="px-4 py-3">
-                  {row.resource_type ? `${row.resource_type}/${row.resource_id ?? ""}` : "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <p className="mt-8 max-w-xl rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+        {t("logOnly")}
+      </p>
     </div>
   );
 }
@@ -410,6 +321,16 @@ function MarketsView() {
     }
   };
 
+  const removeMarket = async (iso2: string) => {
+    if (!window.confirm(t("confirmDelete"))) return;
+    try {
+      await deleteMarket(iso2);
+      reload();
+    } catch {
+      window.alert(t("deleteError"));
+    }
+  };
+
   if (mode === "create") {
     return (
       <div>
@@ -458,7 +379,7 @@ function MarketsView() {
           <h1 className="text-2xl font-semibold">{t("title")}</h1>
           <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => setMode("create")}>{t("newMarket")}</Button>
+        <Button onClick={() => setMode("create")}>{t("addCountry")}</Button>
       </div>
       {loading ? (
         <p className="mt-8 text-sm text-slate-500">{t("loading")}</p>
@@ -472,8 +393,7 @@ function MarketsView() {
             <tr>
               <th className="px-4 py-3 text-left">{t("colCountry")}</th>
               <th className="px-4 py-3 text-left">{t("colLocales")}</th>
-              <th className="px-4 py-3 text-left">{t("colCurrency")}</th>
-              <th className="px-4 py-3 text-left">{t("colStatus")}</th>
+              <th className="px-4 py-3 text-left">{t("colSms")}</th>
               <th className="px-4 py-3 text-right">{t("colActions")}</th>
             </tr>
           </thead>
@@ -485,11 +405,13 @@ function MarketsView() {
                   <span className="ml-2 text-xs text-slate-400">{m.iso2}</span>
                 </td>
                 <td className="px-4 py-3">{m.locale_count}</td>
-                <td className="px-4 py-3">{m.default_currency}</td>
-                <td className="px-4 py-3">{m.is_active ? t("active") : t("draft")}</td>
+                <td className="px-4 py-3">{m.sms_count ? t("smsConfigured", { count: m.sms_count }) : t("smsDefault")}</td>
                 <td className="px-4 py-3 text-right">
                   <Button variant="ghost" size="sm" onClick={() => void openEdit(m.iso2)}>
                     {t("edit")}
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-rose-600" onClick={() => void removeMarket(m.iso2)}>
+                    {t("delete")}
                   </Button>
                 </td>
               </tr>
@@ -497,16 +419,6 @@ function MarketsView() {
           </tbody>
         </table>
       )}
-    </div>
-  );
-}
-
-function Placeholder({ title, phase }: { title: string; phase: string }) {
-  const t = useTranslations("common");
-  return (
-    <div>
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      <p className="mt-8 text-sm text-slate-500">{t("comingSoon", { phase })}</p>
     </div>
   );
 }
