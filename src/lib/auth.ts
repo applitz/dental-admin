@@ -42,7 +42,8 @@ export function hasGateAccess(): boolean {
   return Boolean(getGateToken());
 }
 
-export function clinicLoginUrl(locale = "en"): string {
+export function clinicLoginUrl(locale = "en", options?: { reauth?: boolean }): string {
   const base = process.env.NEXT_PUBLIC_CLINIC_APP_URL ?? "http://localhost:3000";
-  return `${base.replace(/\/$/, "")}/${locale}/login`;
+  const url = `${base.replace(/\/$/, "")}/${locale}/login`;
+  return options?.reauth ? `${url}?reauth=1` : url;
 }

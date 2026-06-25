@@ -20,7 +20,7 @@ export default function ChallengePage() {
 
   function goToLogin() {
     clearSession();
-    window.location.href = clinicLoginUrl(locale);
+    window.location.href = clinicLoginUrl(locale, { reauth: true });
   }
 
   useEffect(() => {
