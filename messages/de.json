@@ -1,0 +1,59 @@
+{
+  "common": {
+    "appName": "Vodett Admin",
+    "loading": "Laden…",
+    "signOut": "Abmelden",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "comingSoon": "Kommt in Phase {phase}"
+  },
+  "nav": {
+    "dashboard": "Übersicht",
+    "tenants": "Mandanten",
+    "countries": "Länder",
+    "features": "Funktionen",
+    "settings": "Einstellungen",
+    "audit": "Audit-Protokoll",
+    "system": "System"
+  },
+  "challenge": {
+    "title": "Plattform-Zugangsschlüssel",
+    "subtitle": "Geben Sie den geheimen Plattform-Schlüssel ein, um die Admin-Konsole zu entsperren.",
+    "label": "Geheimer Schlüssel",
+    "submit": "Konsole entsperren",
+    "invalid": "Ungültiger Schlüssel. Prüfen Sie PLATFORM_ADMIN_GATE_SECRET in der API.",
+    "noSession": "Melden Sie sich über die Klinik-Login-Seite mit Ihrem Plattform-Admin-Konto an.",
+    "goToLogin": "Zum Login"
+  },
+  "auth": {
+    "callbackTitle": "Anmeldung…",
+    "callbackError": "Keine Anmeldesitzung. Bitte über die Klinik-Login-Seite anmelden.",
+    "redirecting": "Weiterleitung zur Sicherheitsprüfung…"
+  },
+  "dashboard": {
+    "title": "Plattform-Übersicht",
+    "subtitle": "Mandanten, Länder und Laufzeitsteuerung für Vodett.",
+    "tenants": "Aktive Mandanten",
+    "countries": "Gestartete Länder",
+    "apiStatus": "API-Status",
+    "gateActive": "Zugang freigeschaltet",
+    "gateRequired": "Geheimer Schlüssel erforderlich"
+  },
+  "tenants": {
+    "title": "Mandanten",
+    "subtitle": "Alle Kliniken auf der Plattform.",
+    "empty": "Noch keine Mandanten oder API Phase 2 nicht bereitgestellt.",
+    "colName": "Name",
+    "colPlan": "Tarif",
+    "colPractices": "Praxen",
+    "colStatus": "Status",
+    "active": "Aktiv",
+    "suspended": "Gesperrt"
+  },
+  "countries": {
+    "title": "Länder",
+    "subtitle": "Neue Märkte mit Sprachen, SMS-Absender und Funktionspaketen starten.",
+    "newCountry": "Neues Land starten",
+    "wizardHint": "Vollständiger Assistent: Sprachen, alphanumerische Absender-ID, Funktionsmatrix — Phase 3."
+  }
+}

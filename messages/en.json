@@ -1,0 +1,59 @@
+{
+  "common": {
+    "appName": "Vodett Admin",
+    "loading": "Loading…",
+    "signOut": "Sign out",
+    "save": "Save",
+    "cancel": "Cancel",
+    "comingSoon": "Coming in Phase {phase}"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "tenants": "Tenants",
+    "countries": "Countries",
+    "features": "Features",
+    "settings": "Settings",
+    "audit": "Audit log",
+    "system": "System"
+  },
+  "challenge": {
+    "title": "Platform access key",
+    "subtitle": "Enter the platform secret key to unlock the admin console.",
+    "label": "Secret key",
+    "submit": "Unlock console",
+    "invalid": "Invalid secret key. Check PLATFORM_ADMIN_GATE_SECRET on the API.",
+    "noSession": "Sign in first at the clinic login page with your platform admin account.",
+    "goToLogin": "Go to login"
+  },
+  "auth": {
+    "callbackTitle": "Signing in…",
+    "callbackError": "Missing login session. Use the clinic login page.",
+    "redirecting": "Redirecting to security check…"
+  },
+  "dashboard": {
+    "title": "Platform overview",
+    "subtitle": "Tenants, countries, and runtime controls for Vodett.",
+    "tenants": "Active tenants",
+    "countries": "Launched countries",
+    "apiStatus": "API status",
+    "gateActive": "Gate unlocked",
+    "gateRequired": "Secret key required"
+  },
+  "tenants": {
+    "title": "Tenants",
+    "subtitle": "All clinics on the platform.",
+    "empty": "No tenants yet or API Phase 2 not deployed.",
+    "colName": "Name",
+    "colPlan": "Plan",
+    "colPractices": "Practices",
+    "colStatus": "Status",
+    "active": "Active",
+    "suspended": "Suspended"
+  },
+  "countries": {
+    "title": "Countries",
+    "subtitle": "Launch new markets with locales, SMS senders, and feature packs.",
+    "newCountry": "Launch new country",
+    "wizardHint": "Full wizard: locales, alphanumeric sender ID, feature matrix — Phase 3."
+  }
+}
