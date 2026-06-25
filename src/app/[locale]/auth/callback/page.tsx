@@ -2,29 +2,31 @@
 
 import { setTokens } from "@/lib/auth";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 function CallbackContent() {
   const t = useTranslations("auth");
   const router = useRouter();
+  const params = useParams();
+  const locale = String(params.locale ?? "en");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const hash = typeof window !== "undefined" ? window.location.hash.slice(1) : "";
-    const params = new URLSearchParams(hash);
-    const access = params.get("access_token");
-    const refresh = params.get("refresh_token");
-    const locale = params.get("locale") ?? "en";
+    const urlParams = new URLSearchParams(hash);
+    const access = urlParams.get("access_token");
+    const refresh = urlParams.get("refresh_token");
+    const localeFromHash = urlParams.get("locale") ?? locale;
 
     if (access && refresh) {
       setTokens(access, refresh);
-      router.replace(`/${locale}/challenge`);
+      router.replace(`/${localeFromHash}/challenge`);
       return;
     }
 
     setError(t("callbackError"));
-  }, [router, t]);
+  }, [router, t, locale]);
 
   if (error) return <p className="text-sm text-red-600">{error}</p>;
   return <p className="text-sm text-slate-600">{t("redirecting")}</p>;

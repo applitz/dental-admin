@@ -8,7 +8,7 @@
 
 | Path | Purpose |
 |------|---------|
-| `/auth/callback` | Receives login tokens from `app.vodett.ai` |
+| `/[locale]/auth/callback` | Receives login tokens from `app.vodett.ai` |
 | `/[locale]/challenge` | Platform secret key |
 | `/[locale]` | Dashboard |
 | `/[locale]/tenants` | Tenant list |
@@ -25,4 +25,4 @@
 
 ## Cross-app login
 
-`dental-web` sets `NEXT_PUBLIC_ADMIN_APP_URL=https://admin.vodett.ai` so platform admins are sent here after login.
+`dental-web` redirects to `https://admin.vodett.ai/{locale}/auth/callback` after login.
