@@ -10,7 +10,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "tenants": "Tenants",
-    "countries": "Countries",
+    "markets": "Markets",
     "features": "Features",
     "settings": "Settings",
     "audit": "Audit log",
@@ -32,9 +32,10 @@
   },
   "dashboard": {
     "title": "Platform overview",
-    "subtitle": "Tenants, countries, and runtime controls for Vodett.",
+    "subtitle": "Tenants, markets, and runtime controls for Vodett.",
     "tenants": "Active tenants",
-    "countries": "Launched countries",
+    "markets": "Live markets",
+    "settings": "Runtime settings",
     "apiStatus": "API status",
     "gateActive": "Gate unlocked",
     "gateRequired": "Secret key required"
@@ -42,7 +43,7 @@
   "tenants": {
     "title": "Tenants",
     "subtitle": "All clinics on the platform.",
-    "empty": "No tenants yet or API Phase 2 not deployed.",
+    "empty": "No tenants yet.",
     "colName": "Name",
     "colPlan": "Plan",
     "colPractices": "Practices",
@@ -50,10 +51,65 @@
     "active": "Active",
     "suspended": "Suspended"
   },
-  "countries": {
-    "title": "Countries",
-    "subtitle": "Launch new markets with locales, SMS senders, and feature packs.",
-    "newCountry": "Launch new country",
-    "wizardHint": "Full wizard: locales, alphanumeric sender ID, feature matrix — Phase 3."
+  "settings": {
+    "title": "Platform settings",
+    "subtitle": "Runtime configuration — credentials stay in server environment variables.",
+    "loading": "Loading settings…",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveError": "Could not save settings",
+    "groups": {
+      "auth": "Authentication & OTP",
+      "comms": "Communications",
+      "urls": "Portal & app URLs",
+      "voice": "Voice & AI models",
+      "storage": "Storage"
+    }
+  },
+  "markets": {
+    "title": "Markets",
+    "subtitle": "Launch regions with locales, SMS senders, and feature packs for new tenants.",
+    "newMarket": "Launch market",
+    "newTitle": "Launch new market",
+    "editTitle": "Edit {name}",
+    "empty": "No markets configured yet.",
+    "loading": "Loading markets…",
+    "active": "Live",
+    "draft": "Draft",
+    "edit": "Edit",
+    "save": "Save",
+    "launch": "Launch",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "saving": "Saving…",
+    "saveError": "Could not save market",
+    "colCountry": "Market",
+    "colLocales": "Locales",
+    "colCurrency": "Currency",
+    "colStatus": "Status",
+    "colActions": "",
+    "fields": {
+      "iso2": "Country code (ISO-2)",
+      "name": "Display name",
+      "timezone": "Default timezone",
+      "currency": "Currency",
+      "dialCode": "Default dial code",
+      "compliance": "Compliance notes",
+      "defaultLocale": "Default",
+      "senderType": "Sender type",
+      "senderId": "Sender ID",
+      "isActive": "Market is live for new signups"
+    },
+    "wizard": {
+      "identity": "Identity",
+      "locales": "Locales",
+      "sms": "SMS",
+      "features": "Features",
+      "golive": "Go live",
+      "localesHint": "Select supported languages. Exactly one must be the default.",
+      "goLiveHint": "When live, this market appears in rollout and tenant defaults can inherit its pack."
+    }
   }
 }

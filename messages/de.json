@@ -10,7 +10,7 @@
   "nav": {
     "dashboard": "Übersicht",
     "tenants": "Mandanten",
-    "countries": "Länder",
+    "markets": "Märkte",
     "features": "Funktionen",
     "settings": "Einstellungen",
     "audit": "Audit-Protokoll",
@@ -32,9 +32,10 @@
   },
   "dashboard": {
     "title": "Plattform-Übersicht",
-    "subtitle": "Mandanten, Länder und Laufzeitsteuerung für Vodett.",
+    "subtitle": "Mandanten, Märkte und Laufzeitsteuerung für Vodett.",
     "tenants": "Aktive Mandanten",
-    "countries": "Gestartete Länder",
+    "markets": "Live-Märkte",
+    "settings": "Laufzeiteinstellungen",
     "apiStatus": "API-Status",
     "gateActive": "Zugang freigeschaltet",
     "gateRequired": "Geheimer Schlüssel erforderlich"
@@ -42,7 +43,7 @@
   "tenants": {
     "title": "Mandanten",
     "subtitle": "Alle Kliniken auf der Plattform.",
-    "empty": "Noch keine Mandanten oder API Phase 2 nicht bereitgestellt.",
+    "empty": "Noch keine Mandanten.",
     "colName": "Name",
     "colPlan": "Tarif",
     "colPractices": "Praxen",
@@ -50,10 +51,65 @@
     "active": "Aktiv",
     "suspended": "Gesperrt"
   },
-  "countries": {
-    "title": "Länder",
-    "subtitle": "Neue Märkte mit Sprachen, SMS-Absender und Funktionspaketen starten.",
-    "newCountry": "Neues Land starten",
-    "wizardHint": "Vollständiger Assistent: Sprachen, alphanumerische Absender-ID, Funktionsmatrix — Phase 3."
+  "settings": {
+    "title": "Plattform-Einstellungen",
+    "subtitle": "Laufzeitkonfiguration — Zugangsdaten bleiben in Server-Umgebungsvariablen.",
+    "loading": "Einstellungen werden geladen…",
+    "save": "Änderungen speichern",
+    "saving": "Speichern…",
+    "saved": "Gespeichert",
+    "saveError": "Einstellungen konnten nicht gespeichert werden",
+    "groups": {
+      "auth": "Authentifizierung & OTP",
+      "comms": "Kommunikation",
+      "urls": "Portal- & App-URLs",
+      "voice": "Sprache & KI-Modelle",
+      "storage": "Speicher"
+    }
+  },
+  "markets": {
+    "title": "Märkte",
+    "subtitle": "Regionen mit Sprachen, SMS-Absendern und Funktionspaketen für neue Mandanten starten.",
+    "newMarket": "Markt starten",
+    "newTitle": "Neuen Markt starten",
+    "editTitle": "{name} bearbeiten",
+    "empty": "Noch keine Märkte konfiguriert.",
+    "loading": "Märkte werden geladen…",
+    "active": "Live",
+    "draft": "Entwurf",
+    "edit": "Bearbeiten",
+    "save": "Speichern",
+    "launch": "Starten",
+    "cancel": "Abbrechen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "saving": "Speichern…",
+    "saveError": "Markt konnte nicht gespeichert werden",
+    "colCountry": "Markt",
+    "colLocales": "Sprachen",
+    "colCurrency": "Währung",
+    "colStatus": "Status",
+    "colActions": "",
+    "fields": {
+      "iso2": "Ländercode (ISO-2)",
+      "name": "Anzeigename",
+      "timezone": "Standard-Zeitzone",
+      "currency": "Währung",
+      "dialCode": "Standard-Vorwahl",
+      "compliance": "Compliance-Hinweise",
+      "defaultLocale": "Standard",
+      "senderType": "Absendertyp",
+      "senderId": "Absender-ID",
+      "isActive": "Markt ist live für neue Registrierungen"
+    },
+    "wizard": {
+      "identity": "Identität",
+      "locales": "Sprachen",
+      "sms": "SMS",
+      "features": "Funktionen",
+      "golive": "Go-Live",
+      "localesHint": "Unterstützte Sprachen wählen. Genau eine muss Standard sein.",
+      "goLiveHint": "Wenn live, erscheint dieser Markt in der Rollout-Liste und Mandanten-Defaults können das Paket übernehmen."
+    }
   }
 }

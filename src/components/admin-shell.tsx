@@ -1,21 +1,32 @@
 "use client";
 
+import { MarketWizard } from "@/components/market-wizard";
+import { SettingsPanel } from "@/components/settings-panel";
 import { Button } from "@/components/ui/button";
 import { listTenants, type TenantSummary } from "@/lib/api";
+import {
+  fetchPlatformHealth,
+  getMarket,
+  listMarkets,
+  listSettings,
+  type PlatformMarketDetail,
+  type PlatformMarketSummary,
+  type PlatformSettingItem,
+} from "@/lib/platform-api";
 import { clearSession, hasGateAccess } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { Activity, Flag, Globe, LayoutDashboard, Shield, Users } from "lucide-react";
+import { Activity, Globe, LayoutDashboard, Shield, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export type AdminView = "dashboard" | "tenants" | "countries" | "features" | "settings" | "audit" | "system";
+export type AdminView = "dashboard" | "tenants" | "markets" | "features" | "settings" | "audit" | "system";
 
 const NAV: { id: AdminView; href: string }[] = [
   { id: "dashboard", href: "" },
   { id: "tenants", href: "/tenants" },
-  { id: "countries", href: "/countries" },
+  { id: "markets", href: "/markets" },
   { id: "features", href: "/features" },
   { id: "settings", href: "/settings" },
   { id: "audit", href: "/audit" },
@@ -28,8 +39,15 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
   const router = useRouter();
   const [view, setView] = useState(initialView);
   const [tenants, setTenants] = useState<TenantSummary[]>([]);
+  const [health, setHealth] = useState({ settings_count: 0, markets_count: 0, active_markets: 0 });
 
   useEffect(() => setView(initialView), [initialView]);
+
+  useEffect(() => {
+    void fetchPlatformHealth()
+      .then(setHealth)
+      .catch(() => setHealth({ settings_count: 0, markets_count: 0, active_markets: 0 }));
+  }, [view]);
 
   useEffect(() => {
     if (view === "dashboard" || view === "tenants") {
@@ -83,18 +101,29 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
       </aside>
 
       <main className="flex-1 overflow-auto p-6 lg:p-8">
-        {view === "dashboard" && <DashboardView count={tenants.length} />}
+        {view === "dashboard" && (
+          <DashboardView count={tenants.length} activeMarkets={health.active_markets} settingsCount={health.settings_count} />
+        )}
         {view === "tenants" && <TenantsView tenants={tenants} />}
-        {view === "countries" && <CountriesView />}
-        {!["dashboard", "tenants", "countries"].includes(view) && (
-          <Placeholder title={t(`nav.${view}`)} phase="2–4" />
+        {view === "markets" && <MarketsView />}
+        {view === "settings" && <SettingsView />}
+        {!["dashboard", "tenants", "markets", "settings"].includes(view) && (
+          <Placeholder title={t(`nav.${view}`)} phase="5–6" />
         )}
       </main>
     </div>
   );
 }
 
-function DashboardView({ count }: { count: number }) {
+function DashboardView({
+  count,
+  activeMarkets,
+  settingsCount,
+}: {
+  count: number;
+  activeMarkets: number;
+  settingsCount: number;
+}) {
   const t = useTranslations("dashboard");
   return (
     <div>
@@ -102,8 +131,8 @@ function DashboardView({ count }: { count: number }) {
       <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat icon={Users} label={t("tenants")} value={String(count)} />
-        <Stat icon={Flag} label={t("countries")} value="—" />
-        <Stat icon={Activity} label={t("apiStatus")} value="OK" />
+        <Stat icon={Globe} label={t("markets")} value={String(activeMarkets)} />
+        <Stat icon={Activity} label={t("settings")} value={String(settingsCount)} />
         <Stat icon={Shield} label={hasGateAccess() ? t("gateActive") : t("gateRequired")} value="✓" />
       </div>
     </div>
@@ -158,12 +187,159 @@ function TenantsView({ tenants }: { tenants: TenantSummary[] }) {
   );
 }
 
-function CountriesView() {
-  const t = useTranslations("countries");
+function SettingsView() {
+  const t = useTranslations("settings");
+  const [items, setItems] = useState<PlatformSettingItem[]>([]);
+  const [groups, setGroups] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const reload = useCallback(() => {
+    void listSettings()
+      .then((r) => {
+        setItems(r.items);
+        setGroups(r.groups);
+      })
+      .catch(() => {
+        setItems([]);
+        setGroups([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => reload(), [reload]);
+
   return (
     <div>
       <h1 className="text-2xl font-semibold">{t("title")}</h1>
-      <p className="mt-8 text-sm text-slate-500">{t("wizardHint")}</p>
+      <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+      {loading ? (
+        <p className="mt-8 text-sm text-slate-500">{t("loading")}</p>
+      ) : (
+        <div className="mt-6">
+          <SettingsPanel items={items} groups={groups} onSaved={reload} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MarketsView() {
+  const t = useTranslations("markets");
+  const [markets, setMarkets] = useState<PlatformMarketSummary[]>([]);
+  const [featureCatalog, setFeatureCatalog] = useState<string[]>([]);
+  const [mode, setMode] = useState<"list" | "create" | "edit">("list");
+  const [editing, setEditing] = useState<PlatformMarketDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const reload = useCallback(() => {
+    void listMarkets()
+      .then((r) => {
+        setMarkets(r.items);
+        setFeatureCatalog(r.feature_catalog);
+      })
+      .catch(() => setMarkets([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => reload(), [reload]);
+
+  const openEdit = async (iso2: string) => {
+    try {
+      const detail = await getMarket(iso2);
+      setEditing(detail);
+      setMode("edit");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  if (mode === "create") {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold">{t("newTitle")}</h1>
+        <div className="mt-6">
+          <MarketWizard
+            featureCatalog={featureCatalog}
+            onCancel={() => setMode("list")}
+            onDone={() => {
+              setMode("list");
+              reload();
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === "edit" && editing) {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold">{t("editTitle", { name: editing.name })}</h1>
+        <div className="mt-6">
+          <MarketWizard
+            featureCatalog={featureCatalog}
+            initial={editing}
+            onCancel={() => {
+              setMode("list");
+              setEditing(null);
+            }}
+            onDone={() => {
+              setMode("list");
+              setEditing(null);
+              reload();
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+        </div>
+        <Button onClick={() => setMode("create")}>{t("newMarket")}</Button>
+      </div>
+      {loading ? (
+        <p className="mt-8 text-sm text-slate-500">{t("loading")}</p>
+      ) : markets.length === 0 ? (
+        <p className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500">
+          {t("empty")}
+        </p>
+      ) : (
+        <table className="mt-6 w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-4 py-3 text-left">{t("colCountry")}</th>
+              <th className="px-4 py-3 text-left">{t("colLocales")}</th>
+              <th className="px-4 py-3 text-left">{t("colCurrency")}</th>
+              <th className="px-4 py-3 text-left">{t("colStatus")}</th>
+              <th className="px-4 py-3 text-right">{t("colActions")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {markets.map((m) => (
+              <tr key={m.id}>
+                <td className="px-4 py-3">
+                  <span className="font-medium">{m.name}</span>
+                  <span className="ml-2 text-xs text-slate-400">{m.iso2}</span>
+                </td>
+                <td className="px-4 py-3">{m.locale_count}</td>
+                <td className="px-4 py-3">{m.default_currency}</td>
+                <td className="px-4 py-3">{m.is_active ? t("active") : t("draft")}</td>
+                <td className="px-4 py-3 text-right">
+                  <Button variant="ghost" size="sm" onClick={() => void openEdit(m.iso2)}>
+                    {t("edit")}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

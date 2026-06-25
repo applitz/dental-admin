@@ -69,3 +69,55 @@ export type TenantSummary = {
 export async function listTenants(): Promise<{ items: TenantSummary[]; total: number }> {
   return apiFetch("/api/v1/platform/tenants");
 }
+
+export type PlatformSettingItem = {
+  key: string;
+  group_key: string;
+  label: string;
+  description: string | null;
+  value_type: string;
+  value: unknown;
+  updated_at: string | null;
+};
+
+export type PlatformMarketLocale = {
+  locale: string;
+  is_default: boolean;
+  enabled: boolean;
+};
+
+export type PlatformMarketSms = {
+  purpose: string;
+  sender_type: string;
+  sender_id: string;
+  twilio_messaging_service_sid: string | null;
+  is_default: boolean;
+};
+
+export type PlatformMarketFeature = {
+  feature_key: string;
+  enabled: boolean;
+  rollout_percent: number;
+};
+
+export type PlatformMarketSummary = {
+  id: string;
+  iso2: string;
+  name: string;
+  default_timezone: string;
+  default_currency: string;
+  default_dial_code: string | null;
+  is_active: boolean;
+  launched_at: string | null;
+  locale_count: number;
+  feature_count: number;
+};
+
+export type PlatformMarketDetail = PlatformMarketSummary & {
+  compliance_notes: string | null;
+  locales: PlatformMarketLocale[];
+  sms_senders: PlatformMarketSms[];
+  features: PlatformMarketFeature[];
+  created_at: string;
+  updated_at: string;
+};
