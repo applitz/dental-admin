@@ -3,7 +3,7 @@
 import { MarketWizard } from "@/components/market-wizard";
 import { SettingsPanel } from "@/components/settings-panel";
 import { Button } from "@/components/ui/button";
-import { listTenants, type TenantSummary } from "@/lib/api";
+import { listTenants, getTenant, listAuditLogs, type TenantSummary, type TenantDetail, type AuditLogItem } from "@/lib/api";
 import {
   fetchPlatformHealth,
   getMarket,
@@ -107,7 +107,8 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
         {view === "tenants" && <TenantsView tenants={tenants} />}
         {view === "markets" && <MarketsView />}
         {view === "settings" && <SettingsView />}
-        {!["dashboard", "tenants", "markets", "settings"].includes(view) && (
+        {view === "audit" && <AuditView />}
+        {!["dashboard", "tenants", "markets", "settings", "audit"].includes(view) && (
           <Placeholder title={t(`nav.${view}`)} phase="5–6" />
         )}
       </main>
@@ -153,6 +154,37 @@ function Stat({ icon: Icon, label, value }: { icon: typeof Users; label: string;
 
 function TenantsView({ tenants }: { tenants: TenantSummary[] }) {
   const t = useTranslations("tenants");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<TenantDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setDetail(null);
+      return;
+    }
+    setLoadingDetail(true);
+    void getTenant(selectedId)
+      .then(setDetail)
+      .catch(() => setDetail(null))
+      .finally(() => setLoadingDetail(false));
+  }, [selectedId]);
+
+  if (selectedId) {
+    return (
+      <div>
+        <Button variant="ghost" size="sm" className="mb-4" onClick={() => setSelectedId(null)}>
+          ← {t("backToList")}
+        </Button>
+        {loadingDetail || !detail ? (
+          <p className="text-sm text-slate-500">{t("loadingDetail")}</p>
+        ) : (
+          <TenantDetailView detail={detail} />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-semibold">{t("title")}</h1>
@@ -166,6 +198,7 @@ function TenantsView({ tenants }: { tenants: TenantSummary[] }) {
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
               <th className="px-4 py-3 text-left">{t("colName")}</th>
+              <th className="px-4 py-3 text-left">{t("colMarket")}</th>
               <th className="px-4 py-3 text-left">{t("colPlan")}</th>
               <th className="px-4 py-3 text-left">{t("colPractices")}</th>
               <th className="px-4 py-3 text-left">{t("colStatus")}</th>
@@ -173,11 +206,135 @@ function TenantsView({ tenants }: { tenants: TenantSummary[] }) {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {tenants.map((row) => (
-              <tr key={row.id}>
+              <tr
+                key={row.id}
+                className="cursor-pointer hover:bg-slate-50"
+                onClick={() => setSelectedId(row.id)}
+              >
                 <td className="px-4 py-3 font-medium">{row.name}</td>
+                <td className="px-4 py-3">{row.market_iso2 ?? "—"}</td>
                 <td className="px-4 py-3">{row.plan_slug ?? "—"}</td>
                 <td className="px-4 py-3">{row.practice_count}</td>
                 <td className="px-4 py-3">{row.is_active ? t("active") : t("suspended")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
+function TenantDetailView({ detail }: { detail: TenantDetail }) {
+  const t = useTranslations("tenants");
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">{detail.name}</h1>
+      <p className="mt-1 text-sm text-slate-500">{detail.slug}</p>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
+          <p className="text-slate-500">{t("detailMarket")}</p>
+          <p className="mt-1 font-medium">{detail.market_iso2 ?? "—"}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
+          <p className="text-slate-500">{t("detailUsers")}</p>
+          <p className="mt-1 font-medium">{detail.user_count}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
+          <p className="text-slate-500">{t("detailPlan")}</p>
+          <p className="mt-1 font-medium">{detail.plan_slug ?? "—"}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
+          <p className="text-slate-500">{t("detailOnboarding")}</p>
+          <p className="mt-1 font-medium">
+            {detail.onboarding_step == null ? t("onboardingComplete") : `Step ${detail.onboarding_step}`}
+          </p>
+        </div>
+      </div>
+      {detail.practices.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold uppercase text-slate-500">{t("detailPractices")}</h2>
+          <table className="mt-3 w-full rounded-xl border border-slate-200 bg-white text-sm">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-2 text-left">{t("colName")}</th>
+                <th className="px-4 py-2 text-left">{t("colCountry")}</th>
+                <th className="px-4 py-2 text-left">{t("colLocale")}</th>
+                <th className="px-4 py-2 text-left">{t("colComms")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {detail.practices.map((p) => (
+                <tr key={p.id}>
+                  <td className="px-4 py-2">{p.name}</td>
+                  <td className="px-4 py-2">{p.country_code ?? "—"}</td>
+                  <td className="px-4 py-2">{p.locale_default}</td>
+                  <td className="px-4 py-2">{p.comms_email ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+      {detail.features.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold uppercase text-slate-500">{t("detailFeatures")}</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {detail.features.map((f) => (
+              <span
+                key={f.feature_key}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs",
+                  f.enabled ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500",
+                )}
+              >
+                {f.feature_key}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function AuditView() {
+  const t = useTranslations("audit");
+  const [items, setItems] = useState<AuditLogItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void listAuditLogs()
+      .then((r) => setItems(r.items))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold">{t("title")}</h1>
+      <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+      {loading ? (
+        <p className="mt-8 text-sm text-slate-500">{t("loading")}</p>
+      ) : items.length === 0 ? (
+        <p className="mt-8 text-sm text-slate-500">{t("empty")}</p>
+      ) : (
+        <table className="mt-6 w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-4 py-3 text-left">{t("colTime")}</th>
+              <th className="px-4 py-3 text-left">{t("colAction")}</th>
+              <th className="px-4 py-3 text-left">{t("colResource")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {items.map((row) => (
+              <tr key={row.id}>
+                <td className="px-4 py-3 text-slate-500">{new Date(row.created_at).toLocaleString()}</td>
+                <td className="px-4 py-3 font-medium">{row.action}</td>
+                <td className="px-4 py-3">
+                  {row.resource_type ? `${row.resource_type}/${row.resource_id ?? ""}` : "—"}
+                </td>
               </tr>
             ))}
           </tbody>

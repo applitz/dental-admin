@@ -49,7 +49,29 @@
     "colPractices": "Practices",
     "colStatus": "Status",
     "active": "Active",
-    "suspended": "Suspended"
+    "suspended": "Suspended",
+    "colMarket": "Market",
+    "colCountry": "Country",
+    "colLocale": "Locale",
+    "colComms": "Comms email",
+    "backToList": "Back to list",
+    "loadingDetail": "Loading tenant…",
+    "detailMarket": "Market",
+    "detailUsers": "Users",
+    "detailPlan": "Plan",
+    "detailOnboarding": "Onboarding",
+    "detailPractices": "Practices",
+    "detailFeatures": "Feature pack",
+    "onboardingComplete": "Complete"
+  },
+  "audit": {
+    "title": "Audit log",
+    "subtitle": "Platform admin actions (settings, markets, no PHI).",
+    "loading": "Loading audit log…",
+    "empty": "No audit entries yet.",
+    "colTime": "Time",
+    "colAction": "Action",
+    "colResource": "Resource"
   },
   "settings": {
     "title": "Platform settings",

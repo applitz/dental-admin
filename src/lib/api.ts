@@ -63,11 +63,47 @@ export type TenantSummary = {
   is_active: boolean;
   plan_slug: string | null;
   practice_count: number;
+  market_iso2: string | null;
+  created_at: string;
+};
+
+export type TenantDetail = TenantSummary & {
+  onboarding_step: number | null;
+  user_count: number;
+  practices: {
+    id: string;
+    name: string;
+    country_code: string | null;
+    locale_default: string;
+    timezone: string;
+    is_active: boolean;
+    phone: string | null;
+    comms_email: string | null;
+  }[];
+  features: { feature_key: string; enabled: boolean; rollout_percent: number }[];
+};
+
+export type AuditLogItem = {
+  id: string;
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  actor_user_id: string | null;
+  metadata_json: string | null;
+  ip_address: string | null;
   created_at: string;
 };
 
 export async function listTenants(): Promise<{ items: TenantSummary[]; total: number }> {
   return apiFetch("/api/v1/platform/tenants");
+}
+
+export async function getTenant(id: string): Promise<TenantDetail> {
+  return apiFetch(`/api/v1/platform/tenants/${id}`);
+}
+
+export async function listAuditLogs(limit = 50, offset = 0): Promise<{ items: AuditLogItem[]; total: number }> {
+  return apiFetch(`/api/v1/platform/audit?limit=${limit}&offset=${offset}`);
 }
 
 export type PlatformSettingItem = {

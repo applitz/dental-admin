@@ -49,7 +49,29 @@
     "colPractices": "Praxen",
     "colStatus": "Status",
     "active": "Aktiv",
-    "suspended": "Gesperrt"
+    "suspended": "Gesperrt",
+    "colMarket": "Markt",
+    "colCountry": "Land",
+    "colLocale": "Sprache",
+    "colComms": "Komm.-E-Mail",
+    "backToList": "Zurück zur Liste",
+    "loadingDetail": "Mandant wird geladen…",
+    "detailMarket": "Markt",
+    "detailUsers": "Benutzer",
+    "detailPlan": "Tarif",
+    "detailOnboarding": "Onboarding",
+    "detailPractices": "Praxen",
+    "detailFeatures": "Funktionspaket",
+    "onboardingComplete": "Abgeschlossen"
+  },
+  "audit": {
+    "title": "Audit-Protokoll",
+    "subtitle": "Plattform-Admin-Aktionen (Einstellungen, Märkte, keine PHI).",
+    "loading": "Audit-Protokoll wird geladen…",
+    "empty": "Noch keine Einträge.",
+    "colTime": "Zeit",
+    "colAction": "Aktion",
+    "colResource": "Ressource"
   },
   "settings": {
     "title": "Plattform-Einstellungen",
