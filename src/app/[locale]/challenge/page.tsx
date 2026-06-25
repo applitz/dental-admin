@@ -1,12 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { clinicLoginUrl, hasPlatformSession, setGateToken } from "@/lib/auth";
-import { verifyPlatformGate } from "@/lib/api";
+import { clearSession, clinicLoginUrl, hasPlatformSession, setGateToken } from "@/lib/auth";
+import { fetchGateStatus, verifyPlatformGate } from "@/lib/api";
+import { gateChallengeErrorKey } from "@/lib/gate-errors";
 import { Shield } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ChallengePage() {
   const t = useTranslations("challenge");
@@ -15,13 +16,29 @@ export default function ChallengePage() {
   const [secret, setSecret] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [gateReady, setGateReady] = useState<boolean | null>(null);
+
+  function goToLogin() {
+    clearSession();
+    window.location.href = clinicLoginUrl(locale);
+  }
+
+  useEffect(() => {
+    if (!hasPlatformSession()) return;
+    fetchGateStatus()
+      .then((status) => {
+        setGateReady(status.gate_configured);
+        if (!status.gate_configured) setError(t("notConfigured"));
+      })
+      .catch(() => setGateReady(null));
+  }, [t]);
 
   if (!hasPlatformSession()) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
           <p className="text-sm text-slate-600">{t("noSession")}</p>
-          <Button className="mt-4 w-full" onClick={() => { window.location.href = clinicLoginUrl(locale); }}>
+          <Button className="mt-4 w-full" onClick={goToLogin}>
             {t("goToLogin")}
           </Button>
         </div>
@@ -37,8 +54,8 @@ export default function ChallengePage() {
       const result = await verifyPlatformGate(secret.trim());
       setGateToken(result.gate_token);
       router.replace(`/${locale}`);
-    } catch {
-      setError(t("invalid"));
+    } catch (err) {
+      setError(t(gateChallengeErrorKey(err)));
     } finally {
       setLoading(false);
     }
@@ -64,8 +81,17 @@ export default function ChallengePage() {
           className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-admin-500 focus:outline-none focus:ring-2 focus:ring-admin-500/20"
         />
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-        <Button type="submit" className="mt-6 w-full" size="lg" disabled={loading || secret.length < 4}>
+        <Button type="submit" className="mt-6 w-full" size="lg" disabled={loading || secret.length < 4 || gateReady === false}>
           {loading ? "…" : t("submit")}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          className="mt-2 w-full"
+          onClick={goToLogin}
+          disabled={loading}
+        >
+          {t("backToLogin")}
         </Button>
       </form>
     </div>

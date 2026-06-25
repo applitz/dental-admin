@@ -21,9 +21,14 @@
     "subtitle": "Enter the platform secret key to unlock the admin console.",
     "label": "Secret key",
     "submit": "Unlock console",
-    "invalid": "Invalid secret key. Check PLATFORM_ADMIN_GATE_SECRET on the API.",
+    "invalid": "Invalid secret key. Try again or contact your platform administrator.",
+    "notConfigured": "Platform access key is not set up on the server. Ask your administrator to configure it.",
+    "locked": "Too many failed attempts. Wait 15 minutes, then try again.",
+    "sessionExpired": "Your session expired. Sign in again at the clinic login page.",
+    "forbidden": "You do not have access to this console.",
     "noSession": "Sign in first at the clinic login page with your platform admin account.",
-    "goToLogin": "Go to login"
+    "goToLogin": "Go to login",
+    "backToLogin": "Back to login"
   },
   "auth": {
     "callbackTitle": "Signing in…",
@@ -75,7 +80,7 @@
   },
   "settings": {
     "title": "Platform settings",
-    "subtitle": "Runtime configuration — credentials stay in server environment variables.",
+    "subtitle": "Runtime configuration — sensitive credentials stay on the server.",
     "loading": "Loading settings…",
     "save": "Save changes",
     "saving": "Saving…",

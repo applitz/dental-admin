@@ -22,7 +22,7 @@ Vodett **platform operations** UI — tenants, markets, feature flags, runtime s
    - Email: `admin@vodett.ai` (from API `PLATFORM_ADMIN_EMAIL` + seed script)
    - Password: API env `PLATFORM_ADMIN_PASSWORD` (auto-seeded on API container start)
    - Forgot password is **not** available for platform admin accounts.
-2. Redirect to **admin.vodett.ai** → enter **gate secret** (`PLATFORM_ADMIN_GATE_SECRET` on API)
+2. Redirect to **admin.vodett.ai** → enter the **platform access key** (configured on the API server, separate from your login password)
 3. API gate token required for all `/api/v1/platform/*` calls
 
 ## Dev

@@ -21,9 +21,14 @@
     "subtitle": "Geben Sie den geheimen Plattform-Schlüssel ein, um die Admin-Konsole zu entsperren.",
     "label": "Geheimer Schlüssel",
     "submit": "Konsole entsperren",
-    "invalid": "Ungültiger Schlüssel. Prüfen Sie PLATFORM_ADMIN_GATE_SECRET in der API.",
+    "invalid": "Ungültiger Schlüssel. Versuchen Sie es erneut oder wenden Sie sich an Ihren Plattform-Administrator.",
+    "notConfigured": "Der Plattform-Zugangsschlüssel ist auf dem Server nicht eingerichtet. Bitten Sie Ihren Administrator um die Einrichtung.",
+    "locked": "Zu viele Fehlversuche. Warten Sie 15 Minuten und versuchen Sie es erneut.",
+    "sessionExpired": "Ihre Sitzung ist abgelaufen. Melden Sie sich erneut über die Klinik-Login-Seite an.",
+    "forbidden": "Sie haben keinen Zugang zu dieser Konsole.",
     "noSession": "Melden Sie sich über die Klinik-Login-Seite mit Ihrem Plattform-Admin-Konto an.",
-    "goToLogin": "Zum Login"
+    "goToLogin": "Zum Login",
+    "backToLogin": "Zurück zum Login"
   },
   "auth": {
     "callbackTitle": "Anmeldung…",
@@ -75,7 +80,7 @@
   },
   "settings": {
     "title": "Plattform-Einstellungen",
-    "subtitle": "Laufzeitkonfiguration — Zugangsdaten bleiben in Server-Umgebungsvariablen.",
+    "subtitle": "Laufzeitkonfiguration — sensible Zugangsdaten bleiben auf dem Server.",
     "loading": "Einstellungen werden geladen…",
     "save": "Änderungen speichern",
     "saving": "Speichern…",

@@ -2,15 +2,42 @@ import { getAccessToken, getGateToken } from "./auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+export type ApiErrorBody = {
+  code?: string;
+  message_key?: string;
+  params?: Record<string, string>;
+};
+
 export class ApiError extends Error {
   constructor(
-    message: string,
     readonly status: number,
-    readonly body: { message_key?: string; detail?: string },
+    readonly body: ApiErrorBody,
   ) {
-    super(message);
+    super(body.message_key ?? "errors.generic");
     this.name = "ApiError";
   }
+}
+
+async function parseError(res: Response): Promise<ApiError> {
+  const data = await res.json().catch(() => ({}));
+  const detail = data.detail ?? data;
+  if (typeof detail === "string") {
+    return new ApiError(res.status, {
+      code: res.status === 404 ? "NOT_FOUND" : "API_ERROR",
+      message_key: detail,
+    });
+  }
+  if (Array.isArray(detail)) {
+    return new ApiError(res.status, {
+      code: "VALIDATION_ERROR",
+      message_key: "errors.validation",
+    });
+  }
+  return new ApiError(res.status, {
+    code: detail.code,
+    message_key: detail.message_key,
+    params: detail.params,
+  });
 }
 
 export async function apiFetch<T>(
@@ -29,23 +56,17 @@ export async function apiFetch<T>(
   }
 
   const res = await fetch(`${API_URL}${path}`, { ...init, headers });
-  const text = await res.text();
-  let body: Record<string, unknown> = {};
-  try {
-    body = text ? JSON.parse(text) : {};
-  } catch {
-    body = { detail: text };
-  }
-
   if (!res.ok) {
-    throw new ApiError(
-      (body.detail as string) ?? res.statusText,
-      res.status,
-      body as { message_key?: string; detail?: string },
-    );
+    throw await parseError(res);
   }
 
-  return body as T;
+  const text = await res.text();
+  if (!text) return {} as T;
+  return JSON.parse(text) as T;
+}
+
+export async function fetchGateStatus(): Promise<{ gate_configured: boolean }> {
+  return apiFetch("/api/v1/platform/auth/gate-status", { skipGate: true });
 }
 
 export async function verifyPlatformGate(secret: string): Promise<{ gate_token: string; expires_in: number }> {

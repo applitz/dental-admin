@@ -12,6 +12,8 @@ ARG NEXT_PUBLIC_CLINIC_APP_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_CLINIC_APP_URL=$NEXT_PUBLIC_CLINIC_APP_URL
 ENV NEXT_TELEMETRY_DISABLED=1
+# Coolify/VPS builds often OOM with Turbopack; webpack + heap cap is more reliable.
+ENV NODE_OPTIONS=--max-old-space-size=2048
 RUN npm run build
 
 FROM node:20-alpine AS runner
