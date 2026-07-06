@@ -45,7 +45,9 @@ export async function apiFetch<T>(
   init: RequestInit & { skipGate?: boolean } = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
-  headers.set("Content-Type", "application/json");
+  if (!(init.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
 
   const access = getAccessToken();
   if (access) headers.set("Authorization", `Bearer ${access}`);

@@ -6,7 +6,7 @@ import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const SECTIONS: AdminView[] = ["tenants", "markets", "features", "settings", "audit", "system"];
+const SECTIONS: AdminView[] = ["tenants", "markets", "mail", "features", "settings", "audit", "system"];
 
 export default function SectionPage() {
   const router = useRouter();
