@@ -27,7 +27,7 @@ export function AddAddressModal({ onClose, onCreated }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-96 rounded-lg bg-white p-4 shadow-lg">
+      <div className="max-h-[calc(100dvh-2rem)] w-96 overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
         <h3 className="mb-3 text-sm font-semibold">Add mailbox address</h3>
         <div className="flex items-center gap-1">
           <input

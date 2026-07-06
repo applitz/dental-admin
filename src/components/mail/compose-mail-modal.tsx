@@ -46,7 +46,7 @@ export function ComposeMailModal({ mailboxId, reply, onClose, onSent }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-[32rem] rounded-lg bg-white p-4 shadow-lg">
+      <div className="max-h-[calc(100dvh-2rem)] w-[32rem] overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
         <h3 className="mb-3 text-sm font-semibold">{reply ? "Reply" : "Compose"}</h3>
         <input
           className="mb-2 w-full rounded border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-50"
