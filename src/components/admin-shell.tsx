@@ -1,6 +1,7 @@
 "use client";
 
 import { FeaturesView } from "@/components/features-view";
+import { MailboxInbox } from "@/components/mail/mailbox-inbox";
 import { SystemView } from "@/components/system-view";
 import { TenantDetailPanel } from "@/components/tenant-detail-panel";
 import { MarketWizard } from "@/components/market-wizard";
@@ -24,12 +25,21 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-export type AdminView = "dashboard" | "tenants" | "markets" | "features" | "settings" | "audit" | "system";
+export type AdminView =
+  | "dashboard"
+  | "tenants"
+  | "markets"
+  | "mail"
+  | "features"
+  | "settings"
+  | "audit"
+  | "system";
 
 const NAV: { id: AdminView; href: string }[] = [
   { id: "dashboard", href: "" },
   { id: "tenants", href: "/tenants" },
   { id: "markets", href: "/markets" },
+  { id: "mail", href: "/mail" },
   { id: "features", href: "/features" },
   { id: "settings", href: "/settings" },
   { id: "audit", href: "/audit" },
@@ -114,6 +124,7 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
           />
         )}
         {view === "markets" && <MarketsView />}
+        {view === "mail" && <MailboxInbox />}
         {view === "settings" && <SettingsView />}
         {view === "audit" && <AuditView />}
         {view === "features" && <FeaturesView />}
