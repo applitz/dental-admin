@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { sendMail, uploadAttachment } from "@/lib/api/platform-mail";
 
 type Props = {
@@ -44,7 +45,9 @@ export function ComposeMailModal({ mailboxId, reply, onClose, onSent }: Props) {
     }
   };
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="max-h-[calc(100dvh-2rem)] w-[32rem] overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
         <h3 className="mb-3 text-sm font-semibold">{reply ? "Reply" : "Compose"}</h3>
@@ -87,6 +90,7 @@ export function ComposeMailModal({ mailboxId, reply, onClose, onSent }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

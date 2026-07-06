@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { createMailbox } from "@/lib/api/platform-mail";
 
 type Props = { onClose: () => void; onCreated: () => void };
@@ -25,7 +26,9 @@ export function AddAddressModal({ onClose, onCreated }: Props) {
     }
   };
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="max-h-[calc(100dvh-2rem)] w-96 overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
         <h3 className="mb-3 text-sm font-semibold">Add mailbox address</h3>
@@ -58,6 +61,7 @@ export function AddAddressModal({ onClose, onCreated }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
