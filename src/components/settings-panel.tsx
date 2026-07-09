@@ -2,6 +2,7 @@
 
 import { patchSettings, type PlatformSettingItem } from "@/lib/platform-api";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -17,6 +18,7 @@ export function SettingsPanel({ items, groups, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
 
   useEffect(() => {
     const initial: Record<string, unknown> = {};
@@ -34,6 +36,20 @@ export function SettingsPanel({ items, groups, onSaved }: Props) {
     }
     return [...map.entries()].filter(([, list]) => list.length > 0);
   }, [items, groups]);
+
+  // Keep the active tab valid as data loads / changes; default to the first group.
+  useEffect(() => {
+    if (grouped.length === 0) {
+      setActiveGroup(null);
+      return;
+    }
+    setActiveGroup((cur) =>
+      cur && grouped.some(([g]) => g === cur) ? cur : grouped[0][0],
+    );
+  }, [grouped]);
+
+  const activeItems =
+    grouped.find(([g]) => g === activeGroup)?.[1] ?? [];
 
   const setValue = useCallback((key: string, value: unknown) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
@@ -65,19 +81,36 @@ export function SettingsPanel({ items, groups, onSaved }: Props) {
   };
 
   return (
-    <div className="space-y-8">
-      {grouped.map(([group, groupItems]) => (
-        <section key={group} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            {t(`groups.${group}` as "groups.auth")}
-          </h2>
-          <div className="mt-4 space-y-5">
-            {groupItems.map((item) => (
-              <SettingField key={item.key} item={item} value={draft[item.key]} onChange={setValue} />
-            ))}
-          </div>
-        </section>
-      ))}
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-1 border-b border-slate-200">
+        {grouped.map(([group]) => {
+          const isActive = group === activeGroup;
+          return (
+            <button
+              key={group}
+              type="button"
+              onClick={() => setActiveGroup(group)}
+              className={cn(
+                "-mb-px rounded-t-lg border-b-2 px-4 py-2 text-sm font-medium transition-colors",
+                isActive
+                  ? "border-admin-600 text-admin-700"
+                  : "border-transparent text-slate-500 hover:text-slate-800",
+              )}
+            >
+              {t(`groups.${group}` as "groups.auth")}
+            </button>
+          );
+        })}
+      </div>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="space-y-5">
+          {activeItems.map((item) => (
+            <SettingField key={item.key} item={item} value={draft[item.key]} onChange={setValue} />
+          ))}
+        </div>
+      </section>
+
       <div className="flex items-center gap-3">
         <Button onClick={() => void onSubmit()} disabled={saving}>
           {saving ? t("saving") : t("save")}

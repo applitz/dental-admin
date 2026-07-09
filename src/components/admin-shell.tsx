@@ -72,8 +72,8 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
   const base = `/${locale}`;
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-56 shrink-0 flex-col bg-admin-900 text-white">
+    <div className="flex h-screen">
+      <aside className="flex w-56 shrink-0 flex-col overflow-y-auto bg-admin-900 text-white">
         <div className="border-b border-white/10 px-4 py-5">
           <p className="text-xs font-semibold uppercase tracking-wider text-admin-100">Vodett</p>
           <p className="text-sm font-medium">{t("common.appName")}</p>
