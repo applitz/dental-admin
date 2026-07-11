@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  deleteThread,
   getThread,
   listMailboxes,
   listThreads,
@@ -74,6 +75,26 @@ export function MailboxInbox() {
     [loadMailboxes, loadThreads],
   );
 
+  const removeThread = useCallback(
+    (id: string) => {
+      if (!window.confirm("Delete this conversation? This cannot be undone.")) return;
+      deleteThread(id)
+        .then(() => {
+          setThreads((prev) => prev.filter((t) => t.id !== id));
+          if (selectedThread === id) {
+            setSelectedThread(null);
+            setDetail(null);
+          }
+          loadMailboxes();
+        })
+        .catch(() => {
+          // Reload to resync if the delete failed (e.g. already gone).
+          loadThreads();
+        });
+    },
+    [selectedThread, loadMailboxes, loadThreads],
+  );
+
   const currentMailboxId =
     selectedMailbox ?? (detail ? detail.mailbox_id : mailboxes[0]?.id ?? null);
 
@@ -120,9 +141,9 @@ export function MailboxInbox() {
         </div>
         <ul className="flex-1 divide-y divide-slate-100 overflow-y-auto">
           {threads.map((t) => (
-            <li key={t.id}>
+            <li key={t.id} className="group relative">
               <button
-                className={`block w-full p-3 text-left hover:bg-slate-50 ${
+                className={`block w-full p-3 pr-9 text-left hover:bg-slate-50 ${
                   selectedThread === t.id ? "bg-slate-100" : ""
                 }`}
                 onClick={() => openThread(t.id)}
@@ -133,6 +154,19 @@ export function MailboxInbox() {
                 </div>
                 <div className="truncate text-xs text-slate-500">{t.subject || "(no subject)"}</div>
                 <div className="truncate text-xs text-slate-400">{t.last_preview}</div>
+              </button>
+              <button
+                type="button"
+                aria-label="Delete conversation"
+                title="Delete conversation"
+                className="absolute right-2 top-2 hidden rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 focus:block group-hover:block"
+                onClick={() => removeThread(t.id)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
               </button>
             </li>
           ))}
@@ -147,12 +181,20 @@ export function MailboxInbox() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">{detail.subject || "(no subject)"}</h2>
-              <button
-                className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50"
-                onClick={startReply}
-              >
-                Reply
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50"
+                  onClick={startReply}
+                >
+                  Reply
+                </button>
+                <button
+                  className="rounded border border-rose-200 px-3 py-1 text-sm text-rose-600 hover:bg-rose-50"
+                  onClick={() => removeThread(detail.id)}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
             {detail.messages.map((m) => (
               <div

@@ -73,6 +73,10 @@ export function markThreadRead(threadId: string): Promise<{ ok: boolean }> {
   return apiFetch(`${BASE}/threads/${threadId}/read`, { method: "POST" });
 }
 
+export function deleteThread(threadId: string): Promise<{ ok: boolean }> {
+  return apiFetch(`${BASE}/threads/${threadId}`, { method: "DELETE" });
+}
+
 export function sendMail(body: {
   mailbox_id: string;
   to_address: string;
