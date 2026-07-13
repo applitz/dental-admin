@@ -104,7 +104,7 @@
       "currentPeriodEnd": "Aktuelle Periode endet",
       "none": "Kein Abonnement",
       "cancel": "Abonnement kündigen",
-      "confirmCancel": "Das Abonnement dieses Mandanten kündigen? Der Zugriff bleibt gemäß den Tarifregeln bis zum Ende der aktuellen Periode bestehen und wird nicht verlängert.",
+      "confirmCancel": "Abonnement dieses Mandanten kündigen? Zukünftige Verlängerungen werden gestoppt.",
       "cancelError": "Abonnement konnte nicht gekündigt werden.",
       "statusLabel": {
         "pending": "Ausstehend",

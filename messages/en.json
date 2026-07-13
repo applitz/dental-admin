@@ -104,7 +104,7 @@
       "currentPeriodEnd": "Current period ends",
       "none": "No subscription",
       "cancel": "Cancel subscription",
-      "confirmCancel": "Cancel this tenant's subscription? Access continues per plan rules until the current period ends, and it will not renew.",
+      "confirmCancel": "Cancel this tenant's subscription? Future renewals will stop.",
       "cancelError": "Could not cancel the subscription.",
       "statusLabel": {
         "pending": "Pending",
