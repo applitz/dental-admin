@@ -203,6 +203,28 @@
     "inactive": "inactive",
     "free": "free",
     "empty": "No plans yet",
-    "confirmDelete": "Delete plan \"{slug}\"?"
+    "confirmDelete": "Delete plan \"{slug}\"?",
+    "deleteError": "Could not delete plan",
+    "perMonth": "€{amount}/mo",
+    "wizard": {
+      "editTitle": "Edit plan",
+      "newTitle": "New plan",
+      "slug": "Slug",
+      "name": "Name",
+      "description": "Description",
+      "tier": "Tier",
+      "freePlan": "Free plan",
+      "active": "Active",
+      "features": "Features (JSON)",
+      "prices": "Prices",
+      "addPrice": "+ Add price",
+      "remove": "Remove",
+      "save": "Save changes",
+      "create": "Create plan",
+      "cancel": "Cancel",
+      "invalidJson": "Features must be valid JSON",
+      "saveFailed": "Save failed",
+      "needPrice": "Add at least one price, or mark the plan as free"
+    }
   }
 }

@@ -452,9 +452,14 @@ function PlansView() {
   const onEdit = (slug: string) => {
     getPlan(slug).then((p) => { setEditing(p); setMode("edit"); }).catch(() => {});
   };
-  const onDelete = (slug: string) => {
+  const onDelete = async (slug: string) => {
     if (!window.confirm(t("confirmDelete", { slug }))) return;
-    deletePlan(slug).then(reload).catch(() => reload());
+    try {
+      await deletePlan(slug);
+      reload();
+    } catch {
+      window.alert(t("deleteError"));
+    }
   };
 
   if (mode === "create" || mode === "edit") {
@@ -468,9 +473,9 @@ function PlansView() {
   }
 
   const priceSummary = (p: Plan) => {
-    if (p.is_free) return "Free";
+    if (p.is_free) return t("free");
     const m = p.prices.find((x) => x.interval === "month" && x.currency === "EUR");
-    return m ? `€${m.amount}/mo` : (p.prices[0] ? `${p.prices[0].amount} ${p.prices[0].currency}` : "—");
+    return m ? t("perMonth", { amount: String(m.amount) }) : (p.prices[0] ? `${p.prices[0].amount} ${p.prices[0].currency}` : "—");
   };
 
   return (

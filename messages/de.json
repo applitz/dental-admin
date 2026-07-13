@@ -203,6 +203,28 @@
     "inactive": "inaktiv",
     "free": "kostenlos",
     "empty": "Noch keine Tarife",
-    "confirmDelete": "Tarif „{slug}“ löschen?"
+    "confirmDelete": "Tarif „{slug}“ löschen?",
+    "deleteError": "Tarif konnte nicht gelöscht werden",
+    "perMonth": "{amount} €/Mon.",
+    "wizard": {
+      "editTitle": "Tarif bearbeiten",
+      "newTitle": "Neuer Tarif",
+      "slug": "Kennung",
+      "name": "Name",
+      "description": "Beschreibung",
+      "tier": "Stufe",
+      "freePlan": "Kostenloser Tarif",
+      "active": "Aktiv",
+      "features": "Funktionen (JSON)",
+      "prices": "Preise",
+      "addPrice": "+ Preis hinzufügen",
+      "remove": "Entfernen",
+      "save": "Änderungen speichern",
+      "create": "Tarif erstellen",
+      "cancel": "Abbrechen",
+      "invalidJson": "Funktionen müssen gültiges JSON sein",
+      "saveFailed": "Speichern fehlgeschlagen",
+      "needPrice": "Fügen Sie mindestens einen Preis hinzu oder markieren Sie den Tarif als kostenlos"
+    }
   }
 }
