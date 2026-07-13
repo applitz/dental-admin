@@ -11,6 +11,7 @@
     "dashboard": "Übersicht",
     "tenants": "Mandanten",
     "markets": "Länder",
+    "plans": "Tarife",
     "mail": "Mail",
     "features": "Funktionen",
     "settings": "Einstellungen",
@@ -187,5 +188,9 @@
       "countryHint": "Land wählen, um optional Telecom-Einstellungen zu überschreiben. Registrierung ist weltweit möglich, auch ohne Eintrag hier.",
       "smsHint": "OTP- und Patienten-SMS-Absender für dieses Land. Leere Felder fallen auf Plattform-Defaults zurück."
     }
+  },
+  "plans": {
+    "title": "Tarife",
+    "subtitle": "Abonnements und Preise."
   }
 }

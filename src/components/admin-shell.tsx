@@ -5,15 +5,19 @@ import { MailboxInbox } from "@/components/mail/mailbox-inbox";
 import { SystemView } from "@/components/system-view";
 import { TenantDetailPanel } from "@/components/tenant-detail-panel";
 import { MarketWizard } from "@/components/market-wizard";
+import { PlanWizard } from "@/components/plan-wizard";
 import { SettingsPanel } from "@/components/settings-panel";
 import { Button } from "@/components/ui/button";
 import { listTenants, getTenant, type TenantSummary, type TenantDetail } from "@/lib/api";
-import { deleteMarket } from "@/lib/platform-actions";
+import { deleteMarket, deletePlan } from "@/lib/platform-actions";
 import {
   fetchPlatformHealth,
   getMarket,
+  getPlan,
   listMarkets,
+  listPlans,
   listSettings,
+  type Plan,
   type PlatformMarketDetail,
   type PlatformMarketSummary,
   type PlatformSettingItem,
@@ -29,6 +33,7 @@ export type AdminView =
   | "dashboard"
   | "tenants"
   | "markets"
+  | "plans"
   | "mail"
   | "features"
   | "settings"
@@ -39,6 +44,7 @@ const NAV: { id: AdminView; href: string }[] = [
   { id: "dashboard", href: "" },
   { id: "tenants", href: "/tenants" },
   { id: "markets", href: "/markets" },
+  { id: "plans", href: "/plans" },
   { id: "mail", href: "/mail" },
   { id: "features", href: "/features" },
   { id: "settings", href: "/settings" },
@@ -124,6 +130,7 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
           />
         )}
         {view === "markets" && <MarketsView />}
+        {view === "plans" && <PlansView />}
         {view === "mail" && <MailboxInbox />}
         {view === "settings" && <SettingsView />}
         {view === "audit" && <AuditView />}
@@ -427,6 +434,89 @@ function MarketsView() {
           </tbody>
         </table>
       )}
+    </div>
+  );
+}
+
+function PlansView() {
+  const t = useTranslations("plans");
+  const [mode, setMode] = useState<"list" | "create" | "edit">("list");
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [editing, setEditing] = useState<Plan | undefined>(undefined);
+
+  const reload = useCallback(() => {
+    listPlans().then((r) => setPlans(r.plans)).catch(() => setPlans([]));
+  }, []);
+  useEffect(() => { reload(); }, [reload]);
+
+  const onEdit = (slug: string) => {
+    getPlan(slug).then((p) => { setEditing(p); setMode("edit"); }).catch(() => {});
+  };
+  const onDelete = (slug: string) => {
+    if (!window.confirm(`Delete plan "${slug}"?`)) return;
+    deletePlan(slug).then(reload).catch(() => reload());
+  };
+
+  if (mode === "create" || mode === "edit") {
+    return (
+      <PlanWizard
+        initial={mode === "edit" ? editing : undefined}
+        onCancel={() => setMode("list")}
+        onDone={() => { setMode("list"); reload(); }}
+      />
+    );
+  }
+
+  const priceSummary = (p: Plan) => {
+    if (p.is_free) return "Free";
+    const m = p.prices.find((x) => x.interval === "month" && x.currency === "EUR");
+    return m ? `€${m.amount}/mo` : (p.prices[0] ? `${p.prices[0].amount} ${p.prices[0].currency}` : "—");
+  };
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+        </div>
+        <button className="rounded-lg bg-admin-600 px-4 py-2 text-sm text-white"
+          onClick={() => { setEditing(undefined); setMode("create"); }}>New plan</button>
+      </div>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-4 py-2 text-left">Name</th>
+              <th className="px-4 py-2 text-left">Slug</th>
+              <th className="px-4 py-2 text-left">Price</th>
+              <th className="px-4 py-2 text-left">Status</th>
+              <th className="px-4 py-2"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {plans.map((p) => (
+              <tr key={p.id}>
+                <td className="px-4 py-2 font-medium">{p.name}</td>
+                <td className="px-4 py-2 text-slate-500">{p.slug}</td>
+                <td className="px-4 py-2">{priceSummary(p)}</td>
+                <td className="px-4 py-2">
+                  {p.is_active ? <span className="text-emerald-600">active</span>
+                               : <span className="text-slate-400">inactive</span>}
+                  {p.is_free && <span className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-xs">free</span>}
+                </td>
+                <td className="px-4 py-2 text-right">
+                  <button className="text-admin-600" onClick={() => onEdit(p.slug)}>Edit</button>
+                  <button className="ml-3 text-rose-600" onClick={() => onDelete(p.slug)}>Delete</button>
+                </td>
+              </tr>
+            ))}
+            {plans.length === 0 && (
+              <tr><td colSpan={5} className="px-4 py-12 text-center text-slate-500">No plans yet</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

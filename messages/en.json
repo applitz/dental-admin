@@ -11,6 +11,7 @@
     "dashboard": "Dashboard",
     "tenants": "Tenants",
     "markets": "Countries",
+    "plans": "Plans",
     "mail": "Mail",
     "features": "Features",
     "settings": "Settings",
@@ -187,5 +188,9 @@
       "countryHint": "Pick a country to optionally override telecom settings. Signup is available worldwide without adding a row here.",
       "smsHint": "Configure OTP and patient SMS senders for this country. Empty fields fall back to platform defaults."
     }
+  },
+  "plans": {
+    "title": "Plans",
+    "subtitle": "Subscription plans and pricing."
   }
 }
