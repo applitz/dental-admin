@@ -453,7 +453,7 @@ function PlansView() {
     getPlan(slug).then((p) => { setEditing(p); setMode("edit"); }).catch(() => {});
   };
   const onDelete = (slug: string) => {
-    if (!window.confirm(`Delete plan "${slug}"?`)) return;
+    if (!window.confirm(t("confirmDelete", { slug }))) return;
     deletePlan(slug).then(reload).catch(() => reload());
   };
 
@@ -481,16 +481,16 @@ function PlansView() {
           <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
         </div>
         <button className="rounded-lg bg-admin-600 px-4 py-2 text-sm text-white"
-          onClick={() => { setEditing(undefined); setMode("create"); }}>New plan</button>
+          onClick={() => { setEditing(undefined); setMode("create"); }}>{t("newPlan")}</button>
       </div>
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <th className="px-4 py-2 text-left">Name</th>
-              <th className="px-4 py-2 text-left">Slug</th>
-              <th className="px-4 py-2 text-left">Price</th>
-              <th className="px-4 py-2 text-left">Status</th>
+              <th className="px-4 py-2 text-left">{t("colName")}</th>
+              <th className="px-4 py-2 text-left">{t("colSlug")}</th>
+              <th className="px-4 py-2 text-left">{t("colPrice")}</th>
+              <th className="px-4 py-2 text-left">{t("colStatus")}</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -501,18 +501,18 @@ function PlansView() {
                 <td className="px-4 py-2 text-slate-500">{p.slug}</td>
                 <td className="px-4 py-2">{priceSummary(p)}</td>
                 <td className="px-4 py-2">
-                  {p.is_active ? <span className="text-emerald-600">active</span>
-                               : <span className="text-slate-400">inactive</span>}
-                  {p.is_free && <span className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-xs">free</span>}
+                  {p.is_active ? <span className="text-emerald-600">{t("active")}</span>
+                               : <span className="text-slate-400">{t("inactive")}</span>}
+                  {p.is_free && <span className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-xs">{t("free")}</span>}
                 </td>
                 <td className="px-4 py-2 text-right">
-                  <button className="text-admin-600" onClick={() => onEdit(p.slug)}>Edit</button>
-                  <button className="ml-3 text-rose-600" onClick={() => onDelete(p.slug)}>Delete</button>
+                  <button className="text-admin-600" onClick={() => onEdit(p.slug)}>{t("edit")}</button>
+                  <button className="ml-3 text-rose-600" onClick={() => onDelete(p.slug)}>{t("delete")}</button>
                 </td>
               </tr>
             ))}
             {plans.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-12 text-center text-slate-500">No plans yet</td></tr>
+              <tr><td colSpan={5} className="px-4 py-12 text-center text-slate-500">{t("empty")}</td></tr>
             )}
           </tbody>
         </table>

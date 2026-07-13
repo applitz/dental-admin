@@ -191,6 +191,18 @@
   },
   "plans": {
     "title": "Tarife",
-    "subtitle": "Abonnements und Preise."
+    "subtitle": "Abonnements und Preise.",
+    "newPlan": "Neuer Tarif",
+    "colName": "Name",
+    "colSlug": "Kennung",
+    "colPrice": "Preis",
+    "colStatus": "Status",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "active": "aktiv",
+    "inactive": "inaktiv",
+    "free": "kostenlos",
+    "empty": "Noch keine Tarife",
+    "confirmDelete": "Tarif „{slug}“ löschen?"
   }
 }

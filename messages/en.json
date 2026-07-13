@@ -191,6 +191,18 @@
   },
   "plans": {
     "title": "Plans",
-    "subtitle": "Subscription plans and pricing."
+    "subtitle": "Subscription plans and pricing.",
+    "newPlan": "New plan",
+    "colName": "Name",
+    "colSlug": "Slug",
+    "colPrice": "Price",
+    "colStatus": "Status",
+    "edit": "Edit",
+    "delete": "Delete",
+    "active": "active",
+    "inactive": "inactive",
+    "free": "free",
+    "empty": "No plans yet",
+    "confirmDelete": "Delete plan \"{slug}\"?"
   }
 }
