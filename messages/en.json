@@ -94,7 +94,30 @@
     "actionCommsDone": "Comms provisioning retry finished",
     "actionError": "Action failed",
     "confirmImpersonate": "Open the clinic app as this tenant's owner? Session lasts 15 minutes.",
-    "impersonateError": "Could not start impersonation session"
+    "impersonateError": "Could not start impersonation session",
+    "subscription": {
+      "title": "Subscription",
+      "plan": "Plan",
+      "status": "Status",
+      "interval": "Billing interval",
+      "amount": "Amount",
+      "currentPeriodEnd": "Current period ends",
+      "none": "No subscription",
+      "cancel": "Cancel subscription",
+      "confirmCancel": "Cancel this tenant's subscription? Access continues per plan rules until the current period ends, and it will not renew.",
+      "cancelError": "Could not cancel the subscription.",
+      "statusLabel": {
+        "pending": "Pending",
+        "active": "Active",
+        "past_due": "Past due",
+        "canceled": "Canceled",
+        "expired": "Expired"
+      },
+      "intervalLabel": {
+        "month": "Monthly",
+        "year": "Yearly"
+      }
+    }
   },
   "features": {
     "title": "Feature catalog",

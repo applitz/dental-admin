@@ -94,7 +94,30 @@
     "actionCommsDone": "Komm.-Bereitstellung abgeschlossen",
     "actionError": "Aktion fehlgeschlagen",
     "confirmImpersonate": "Klinik-App als Mandanten-Inhaber öffnen? Sitzung gilt 15 Minuten.",
-    "impersonateError": "Impersonation konnte nicht gestartet werden"
+    "impersonateError": "Impersonation konnte nicht gestartet werden",
+    "subscription": {
+      "title": "Abonnement",
+      "plan": "Tarif",
+      "status": "Status",
+      "interval": "Abrechnungsintervall",
+      "amount": "Betrag",
+      "currentPeriodEnd": "Aktuelle Periode endet",
+      "none": "Kein Abonnement",
+      "cancel": "Abonnement kündigen",
+      "confirmCancel": "Das Abonnement dieses Mandanten kündigen? Der Zugriff bleibt gemäß den Tarifregeln bis zum Ende der aktuellen Periode bestehen und wird nicht verlängert.",
+      "cancelError": "Abonnement konnte nicht gekündigt werden.",
+      "statusLabel": {
+        "pending": "Ausstehend",
+        "active": "Aktiv",
+        "past_due": "Zahlung überfällig",
+        "canceled": "Gekündigt",
+        "expired": "Abgelaufen"
+      },
+      "intervalLabel": {
+        "month": "Monatlich",
+        "year": "Jährlich"
+      }
+    }
   },
   "features": {
     "title": "Funktionskatalog",

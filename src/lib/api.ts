@@ -97,6 +97,15 @@ export type TenantSummary = {
   created_at: string;
 };
 
+export type TenantSubscription = {
+  plan_slug: string | null;
+  status: string;
+  interval: string | null;
+  currency: string | null;
+  amount: number | null;
+  current_period_end: string | null;
+};
+
 export type TenantDetail = TenantSummary & {
   onboarding_step: number | null;
   user_count: number;
@@ -111,6 +120,7 @@ export type TenantDetail = TenantSummary & {
     comms_email: string | null;
   }[];
   features: { feature_key: string; enabled: boolean; rollout_percent: number }[];
+  subscription?: TenantSubscription | null;
 };
 
 export type AuditLogItem = {

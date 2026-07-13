@@ -1,7 +1,8 @@
 "use client";
 
-import { patchTenant, type TenantDetail } from "@/lib/api";
+import { getTenant, patchTenant, type TenantDetail } from "@/lib/api";
 import {
+  cancelTenantSubscription,
   fetchFeatureCatalog,
   impersonateTenant,
   listTenantUsers,
@@ -119,6 +120,19 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
     }
   }
 
+  async function cancelSubscription() {
+    if (!window.confirm(t("subscription.confirmCancel"))) return;
+    setBusy(true);
+    try {
+      await cancelTenantSubscription(detail.id);
+      onUpdated(await getTenant(detail.id));
+    } catch {
+      window.alert(t("subscription.cancelError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const tabs: Tab[] = ["overview", "users", "patients", "features", "actions"];
 
   return (
@@ -166,15 +180,60 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
       </div>
 
       {tab === "overview" && (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <InfoCard label={t("detailMarket")} value={detail.market_iso2 ?? "—"} />
-          <InfoCard label={t("detailUsers")} value={String(detail.user_count)} />
-          <InfoCard label={t("detailPlan")} value={detail.plan_slug ?? "—"} />
-          <InfoCard
-            label={t("detailOnboarding")}
-            value={detail.onboarding_step == null ? t("onboardingComplete") : `Step ${detail.onboarding_step}`}
-          />
-        </div>
+        <>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <InfoCard label={t("detailMarket")} value={detail.market_iso2 ?? "—"} />
+            <InfoCard label={t("detailUsers")} value={String(detail.user_count)} />
+            <InfoCard label={t("detailPlan")} value={detail.plan_slug ?? "—"} />
+            <InfoCard
+              label={t("detailOnboarding")}
+              value={detail.onboarding_step == null ? t("onboardingComplete") : `Step ${detail.onboarding_step}`}
+            />
+          </div>
+
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-slate-700">{t("subscription.title")}</h2>
+              {detail.subscription && (detail.subscription.status === "active" || detail.subscription.status === "pending") && (
+                <Button variant="secondary" size="sm" disabled={busy} onClick={() => void cancelSubscription()}>
+                  {t("subscription.cancel")}
+                </Button>
+              )}
+            </div>
+            {detail.subscription ? (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <InfoCard label={t("subscription.plan")} value={detail.subscription.plan_slug ?? "—"} />
+                <InfoCard
+                  label={t("subscription.status")}
+                  valueNode={
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        subscriptionStatusClass(detail.subscription.status),
+                      )}
+                    >
+                      {subscriptionStatusLabel(t, detail.subscription.status)}
+                    </span>
+                  }
+                />
+                <InfoCard
+                  label={t("subscription.interval")}
+                  value={
+                    detail.subscription.interval === "month"
+                      ? t("subscription.intervalLabel.month")
+                      : detail.subscription.interval === "year"
+                        ? t("subscription.intervalLabel.year")
+                        : (detail.subscription.interval ?? "—")
+                  }
+                />
+                <InfoCard label={t("subscription.amount")} value={formatAmount(detail.subscription.amount, detail.subscription.currency, locale)} />
+                <InfoCard label={t("subscription.currentPeriodEnd")} value={formatDate(detail.subscription.current_period_end, locale)} />
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-slate-500">{t("subscription.none")}</p>
+            )}
+          </div>
+        </>
       )}
 
       {tab === "users" && (
@@ -294,11 +353,58 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
   );
 }
 
-function InfoCard({ label, value }: { label: string; value: string }) {
+function InfoCard({
+  label,
+  value,
+  valueNode,
+}: {
+  label: string;
+  value?: string;
+  valueNode?: React.ReactNode;
+}) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
       <p className="text-slate-500">{label}</p>
-      <p className="mt-1 font-medium">{value}</p>
+      <p className="mt-1 font-medium">{valueNode ?? value}</p>
     </div>
   );
+}
+
+const SUBSCRIPTION_STATUSES = ["pending", "active", "past_due", "canceled", "expired"] as const;
+
+function subscriptionStatusLabel(t: (key: string) => string, status: string): string {
+  const known = SUBSCRIPTION_STATUSES.find((s) => s === status);
+  return known ? t(`subscription.statusLabel.${known}`) : status;
+}
+
+function subscriptionStatusClass(status: string): string {
+  switch (status) {
+    case "active":
+      return "bg-emerald-100 text-emerald-800";
+    case "pending":
+      return "bg-amber-100 text-amber-800";
+    case "past_due":
+      return "bg-orange-100 text-orange-800";
+    case "canceled":
+    case "expired":
+      return "bg-slate-200 text-slate-600";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
+function formatAmount(amount: number | null, currency: string | null, locale: string): string {
+  if (amount == null || !currency) return "—";
+  try {
+    return new Intl.NumberFormat(locale, { style: "currency", currency }).format(amount);
+  } catch {
+    return `${amount} ${currency}`;
+  }
+}
+
+function formatDate(value: string | null, locale: string): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric" }).format(d);
 }

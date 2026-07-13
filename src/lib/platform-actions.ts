@@ -111,3 +111,7 @@ export async function deleteMarket(iso2: string): Promise<void> {
 export async function deletePlan(slug: string): Promise<void> {
   await apiFetch(`/api/v1/platform/plans/${slug}`, { method: "DELETE" });
 }
+
+export async function cancelTenantSubscription(tenantId: string): Promise<{ ok: boolean }> {
+  return apiFetch(`/api/v1/platform/tenants/${tenantId}/subscription/cancel`, { method: "POST" });
+}
