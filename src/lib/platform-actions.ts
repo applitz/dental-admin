@@ -107,3 +107,7 @@ export async function patchTenantFeatures(
 export async function deleteMarket(iso2: string): Promise<void> {
   await apiFetch(`/api/v1/platform/markets/${iso2}`, { method: "DELETE" });
 }
+
+export async function deletePlan(slug: string): Promise<void> {
+  await apiFetch(`/api/v1/platform/plans/${slug}`, { method: "DELETE" });
+}

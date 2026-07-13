@@ -51,3 +51,64 @@ export async function fetchPlatformHealth(): Promise<{
 }> {
   return apiFetch("/api/v1/platform/health");
 }
+
+export type PlanPrice = {
+  id?: string;
+  currency: string;
+  interval: "month" | "year";
+  amount: string | number;
+  is_active: boolean;
+};
+
+export type Plan = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  tier: number;
+  is_free: boolean;
+  is_active: boolean;
+  features_json: Record<string, unknown>;
+  sort_order: number;
+  prices: PlanPrice[];
+};
+
+const PLANS = "/api/v1/platform/plans";
+
+export function listPlans(): Promise<{ plans: Plan[] }> {
+  return apiFetch(PLANS);
+}
+
+export function getPlan(slug: string): Promise<Plan> {
+  return apiFetch(`${PLANS}/${slug}`);
+}
+
+export function createPlan(body: {
+  slug: string;
+  name: string;
+  description?: string;
+  tier?: number;
+  is_free?: boolean;
+  is_active?: boolean;
+  features_json?: Record<string, unknown>;
+  sort_order?: number;
+  prices?: Omit<PlanPrice, "id">[];
+}): Promise<Plan> {
+  return apiFetch(PLANS, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function updatePlan(
+  slug: string,
+  body: Partial<{
+    name: string;
+    description: string;
+    tier: number;
+    is_free: boolean;
+    is_active: boolean;
+    features_json: Record<string, unknown>;
+    sort_order: number;
+    prices: Omit<PlanPrice, "id">[];
+  }>,
+): Promise<Plan> {
+  return apiFetch(`${PLANS}/${slug}`, { method: "PATCH", body: JSON.stringify(body) });
+}
