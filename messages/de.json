@@ -248,6 +248,31 @@
       "invalidJson": "Funktionen müssen gültiges JSON sein",
       "saveFailed": "Speichern fehlgeschlagen",
       "needPrice": "Fügen Sie mindestens einen Preis hinzu oder markieren Sie den Tarif als kostenlos"
+    },
+    "limits": "Limits",
+    "maxPractices": "Max. Praxen",
+    "maxUsers": "Max. Benutzer",
+    "unlimited": "Unbegrenzt",
+    "modulesTitle": "Module",
+    "selectAll": "Alle auswählen",
+    "addons": "Zusatzoptionen",
+    "rbac": "Eigene Rollen (RBAC)",
+    "prioritySupport": "Priorisierter Support",
+    "modules": {
+      "calendar": "Kalender & Termine",
+      "patients": "Patienten",
+      "clinical": "Behandlungskarte",
+      "ortho": "Kieferorthopädie",
+      "prescriptions": "Rezepte",
+      "documents": "Dokumente",
+      "billing": "Rechnungen",
+      "payments": "Zahlungen",
+      "insurance": "Versicherung",
+      "comms": "Kommunikation",
+      "analytics": "Analysen & Berichte",
+      "inventory": "Inventar",
+      "lab": "Labor",
+      "telemed": "Telemedizin"
     }
   }
 }

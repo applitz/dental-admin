@@ -248,6 +248,31 @@
       "invalidJson": "Features must be valid JSON",
       "saveFailed": "Save failed",
       "needPrice": "Add at least one price, or mark the plan as free"
+    },
+    "limits": "Limits",
+    "maxPractices": "Max practices",
+    "maxUsers": "Max users",
+    "unlimited": "Unlimited",
+    "modulesTitle": "Modules",
+    "selectAll": "Select all",
+    "addons": "Add-ons",
+    "rbac": "Custom roles (RBAC)",
+    "prioritySupport": "Priority support",
+    "modules": {
+      "calendar": "Calendar & appointments",
+      "patients": "Patients",
+      "clinical": "Clinical charting",
+      "ortho": "Orthodontics",
+      "prescriptions": "Prescriptions",
+      "documents": "Documents",
+      "billing": "Billing & invoices",
+      "payments": "Payments",
+      "insurance": "Insurance",
+      "comms": "Communications",
+      "analytics": "Analytics & reports",
+      "inventory": "Inventory",
+      "lab": "Lab",
+      "telemed": "Telemedicine"
     }
   }
 }

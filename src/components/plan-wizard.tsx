@@ -7,6 +7,60 @@ import { createPlan, updatePlan, type Plan, type PlanPrice } from "@/lib/platfor
 const CURRENCIES = ["EUR", "USD", "GBP", "CHF"];
 const INTERVALS: PlanPrice["interval"][] = ["month", "year"];
 
+const MODULES = [
+  "calendar", "patients", "clinical", "ortho", "prescriptions", "documents",
+  "billing", "payments", "insurance", "comms", "analytics", "inventory",
+  "lab", "telemed",
+];
+
+const MANAGED_KEYS = new Set(["max_practices", "max_users", "modules", "rbac", "priority_support"]);
+
+function parseFeatures(featuresJson: Record<string, unknown> | undefined) {
+  const obj = featuresJson ?? {};
+
+  let unlimitedPractices = false;
+  let maxPractices = 1;
+  if ("max_practices" in obj) {
+    if (obj.max_practices === null) unlimitedPractices = true;
+    else if (typeof obj.max_practices === "number") maxPractices = obj.max_practices;
+  }
+
+  let unlimitedUsers = false;
+  let maxUsers = 5;
+  if ("max_users" in obj) {
+    if (obj.max_users === null) unlimitedUsers = true;
+    else if (typeof obj.max_users === "number") maxUsers = obj.max_users;
+  }
+
+  const selectedModules = new Set<string>();
+  const unknownModules: string[] = [];
+  const modulesVal = obj.modules;
+  if (Array.isArray(modulesVal)) {
+    if (modulesVal.includes("all")) {
+      MODULES.forEach((m) => selectedModules.add(m));
+    } else {
+      for (const m of modulesVal) {
+        if (typeof m !== "string") continue;
+        if (MODULES.includes(m)) selectedModules.add(m);
+        else unknownModules.push(m);
+      }
+    }
+  }
+
+  const rbac = obj.rbac === true;
+  const prioritySupport = obj.priority_support === true;
+
+  const unknownKeys: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (!MANAGED_KEYS.has(k)) unknownKeys[k] = v;
+  }
+
+  return {
+    unlimitedPractices, maxPractices, unlimitedUsers, maxUsers,
+    selectedModules, unknownModules, rbac, prioritySupport, unknownKeys,
+  };
+}
+
 export function PlanWizard({
   initial, onDone, onCancel,
 }: { initial?: Plan; onDone: () => void; onCancel: () => void }) {
@@ -18,9 +72,18 @@ export function PlanWizard({
   const [tier, setTier] = useState(initial?.tier ?? 0);
   const [isFree, setIsFree] = useState(initial?.is_free ?? false);
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
-  const [features, setFeatures] = useState(
-    JSON.stringify(initial?.features_json ?? {}, null, 2),
-  );
+
+  const initialFeatures = parseFeatures(initial?.features_json);
+  const [unlimitedPractices, setUnlimitedPractices] = useState(initialFeatures.unlimitedPractices);
+  const [maxPractices, setMaxPractices] = useState(initialFeatures.maxPractices);
+  const [unlimitedUsers, setUnlimitedUsers] = useState(initialFeatures.unlimitedUsers);
+  const [maxUsers, setMaxUsers] = useState(initialFeatures.maxUsers);
+  const [selectedModules, setSelectedModules] = useState<Set<string>>(initialFeatures.selectedModules);
+  const [unknownModules] = useState<string[]>(initialFeatures.unknownModules);
+  const [unknownKeys] = useState<Record<string, unknown>>(initialFeatures.unknownKeys);
+  const [rbac, setRbac] = useState(initialFeatures.rbac);
+  const [prioritySupport, setPrioritySupport] = useState(initialFeatures.prioritySupport);
+
   const [prices, setPrices] = useState<PlanPrice[]>(
     initial?.prices ?? [{ currency: "EUR", interval: "month", amount: "", is_active: true }],
   );
@@ -33,11 +96,21 @@ export function PlanWizard({
   const setPrice = (i: number, patch: Partial<PlanPrice>) =>
     setPrices((p) => p.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
 
+  const allModulesSelected = unknownModules.length === 0 && selectedModules.size === MODULES.length;
+
+  const toggleModule = (m: string) =>
+    setSelectedModules((prev) => {
+      const next = new Set(prev);
+      if (next.has(m)) next.delete(m);
+      else next.add(m);
+      return next;
+    });
+
+  const toggleSelectAll = (checked: boolean) =>
+    setSelectedModules(checked ? new Set(MODULES) : new Set());
+
   const submit = async () => {
     setBusy(true); setError(null);
-    let featuresJson: Record<string, unknown>;
-    try { featuresJson = JSON.parse(features || "{}"); }
-    catch { setBusy(false); setError(t("wizard.invalidJson")); return; }
     const filteredPrices = prices
       .filter((p) => p.amount !== "")
       .map((p) => ({
@@ -47,6 +120,15 @@ export function PlanWizard({
     if (!isFree && filteredPrices.length === 0) {
       setBusy(false); setError(t("wizard.needPrice")); return;
     }
+    const managedModules = allModulesSelected ? ["all"] : [...selectedModules, ...unknownModules];
+    const featuresJson: Record<string, unknown> = {
+      ...unknownKeys,
+      max_practices: unlimitedPractices ? null : Number(maxPractices),
+      max_users: unlimitedUsers ? null : Number(maxUsers),
+      modules: managedModules,
+      ...(rbac ? { rbac: true } : {}),
+      ...(prioritySupport ? { priority_support: true } : {}),
+    };
     const body = {
       name, description, tier, is_free: isFree, is_active: isActive,
       features_json: featuresJson,
@@ -104,11 +186,66 @@ export function PlanWizard({
         </label>
       </div>
 
-      <label className="block text-sm">
-        <span className="mb-1 block text-slate-500">{t("wizard.features")}</span>
-        <textarea rows={5} className="w-full rounded-lg border border-slate-200 px-3 py-2 font-mono text-xs"
-          value={features} onChange={(e) => setFeatures(e.target.value)} />
-      </label>
+      <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+        <span className="block text-sm font-medium">{t("limits")}</span>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-sm">
+            <span className="mb-1 block text-slate-500">{t("maxPractices")}</span>
+            <input type="number" min="1" disabled={unlimitedPractices}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50"
+              value={maxPractices} onChange={(e) => setMaxPractices(Number(e.target.value))} />
+            <label className="mt-1 flex items-center gap-2 text-slate-500">
+              <input type="checkbox" checked={unlimitedPractices}
+                onChange={(e) => setUnlimitedPractices(e.target.checked)} />
+              {t("unlimited")}
+            </label>
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block text-slate-500">{t("maxUsers")}</span>
+            <input type="number" min="1" disabled={unlimitedUsers}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50"
+              value={maxUsers} onChange={(e) => setMaxUsers(Number(e.target.value))} />
+            <label className="mt-1 flex items-center gap-2 text-slate-500">
+              <input type="checkbox" checked={unlimitedUsers}
+                onChange={(e) => setUnlimitedUsers(e.target.checked)} />
+              {t("unlimited")}
+            </label>
+          </label>
+        </div>
+      </div>
+
+      <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">{t("modulesTitle")}</span>
+          <label className="flex items-center gap-2 text-sm text-slate-500">
+            <input type="checkbox" checked={allModulesSelected}
+              onChange={(e) => toggleSelectAll(e.target.checked)} />
+            {t("selectAll")}
+          </label>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {MODULES.map((m) => (
+            <label key={m} className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={selectedModules.has(m)}
+                onChange={() => toggleModule(m)} />
+              {t(`modules.${m}`)}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+        <span className="block text-sm font-medium">{t("addons")}</span>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={rbac} onChange={(e) => setRbac(e.target.checked)} />
+          {t("rbac")}
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={prioritySupport}
+            onChange={(e) => setPrioritySupport(e.target.checked)} />
+          {t("prioritySupport")}
+        </label>
+      </div>
 
       {!isFree && (
         <div className="space-y-2">
