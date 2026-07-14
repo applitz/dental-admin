@@ -123,8 +123,8 @@ export function PlanWizard({
     const managedModules = allModulesSelected ? ["all"] : [...selectedModules, ...unknownModules];
     const featuresJson: Record<string, unknown> = {
       ...unknownKeys,
-      max_practices: unlimitedPractices ? null : Number(maxPractices),
-      max_users: unlimitedUsers ? null : Number(maxUsers),
+      max_practices: unlimitedPractices ? null : Math.max(1, Math.floor(Number(maxPractices) || 1)),
+      max_users: unlimitedUsers ? null : Math.max(1, Math.floor(Number(maxUsers) || 1)),
       modules: managedModules,
       ...(rbac ? { rbac: true } : {}),
       ...(prioritySupport ? { priority_support: true } : {}),
