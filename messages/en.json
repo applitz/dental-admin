@@ -170,7 +170,7 @@
   },
   "markets": {
     "title": "Country telecom",
-    "subtitle": "Vodett is worldwide. Add optional per-country Twilio sender overrides — leave SMS blank to use platform defaults.",
+    "subtitle": "Vodett is worldwide. Add optional per-country Telnyx sender overrides — leave SMS blank to use platform defaults.",
     "addCountry": "Add country override",
     "newTitle": "Add country override",
     "editTitle": "Edit {name}",
@@ -202,12 +202,12 @@
       "senderType": "Sender type",
       "senderId": "Sender ID",
       "senderIdPlaceholder": "Leave empty to use platform default",
-      "messagingSid": "Twilio messaging service SID",
+      "messagingSid": "Messaging profile ID",
       "messagingSidPlaceholder": "Optional — for routed sender pools"
     },
     "wizard": {
       "country": "Country",
-      "sms": "Twilio SMS",
+      "sms": "Telnyx SMS",
       "countryHint": "Pick a country to optionally override telecom settings. Signup is available worldwide without adding a row here.",
       "smsHint": "Configure OTP and patient SMS senders for this country. Empty fields fall back to platform defaults."
     }

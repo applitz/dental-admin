@@ -185,7 +185,7 @@ export type PlatformMarketSms = {
   purpose: string;
   sender_type: string;
   sender_id: string;
-  twilio_messaging_service_sid: string | null;
+  messaging_profile_id: string | null;
   is_default: boolean;
 };
 
