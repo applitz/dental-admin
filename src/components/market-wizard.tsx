@@ -36,14 +36,14 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
         purpose: "patient",
         sender_type: "alphanumeric",
         sender_id: "",
-        twilio_messaging_service_sid: null,
+        messaging_profile_id: null,
         is_default: true,
       },
       {
         purpose: "otp",
         sender_type: "alphanumeric",
         sender_id: "",
-        twilio_messaging_service_sid: null,
+        messaging_profile_id: null,
         is_default: true,
       },
     ],
@@ -191,12 +191,12 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                     <input
                       className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
                       placeholder={t("fields.messagingSidPlaceholder")}
-                      value={sms.twilio_messaging_service_sid ?? ""}
+                      value={sms.messaging_profile_id ?? ""}
                       onChange={(e) => {
                         const next = [...smsSenders];
                         next[idx] = {
                           ...sms,
-                          twilio_messaging_service_sid: e.target.value || null,
+                          messaging_profile_id: e.target.value || null,
                         };
                         setSmsSenders(next);
                       }}

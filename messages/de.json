@@ -170,7 +170,7 @@
   },
   "markets": {
     "title": "Länder-Telecom",
-    "subtitle": "Vodett ist weltweit verfügbar. Optionale Twilio-Absender pro Land — leere SMS-Felder nutzen Plattform-Defaults.",
+    "subtitle": "Vodett ist weltweit verfügbar. Optionale Telnyx-Absender pro Land — leere SMS-Felder nutzen Plattform-Defaults.",
     "addCountry": "Länder-Override hinzufügen",
     "newTitle": "Länder-Override hinzufügen",
     "editTitle": "{name} bearbeiten",
@@ -202,12 +202,12 @@
       "senderType": "Absendertyp",
       "senderId": "Absender-ID",
       "senderIdPlaceholder": "Leer lassen für Plattform-Standard",
-      "messagingSid": "Twilio Messaging Service SID",
+      "messagingSid": "Messaging-Profil-ID",
       "messagingSidPlaceholder": "Optional — für geroutete Absender-Pools"
     },
     "wizard": {
       "country": "Land",
-      "sms": "Twilio SMS",
+      "sms": "Telnyx SMS",
       "countryHint": "Land wählen, um optional Telecom-Einstellungen zu überschreiben. Registrierung ist weltweit möglich, auch ohne Eintrag hier.",
       "smsHint": "OTP- und Patienten-SMS-Absender für dieses Land. Leere Felder fallen auf Plattform-Defaults zurück."
     }
