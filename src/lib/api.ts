@@ -1,4 +1,10 @@
-import { getAccessToken, getGateToken } from "./auth";
+import {
+  getAccessToken,
+  getGateToken,
+  localeFromPath,
+  redirectToChallenge,
+  redirectToClinicLogin,
+} from "./auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -42,7 +48,7 @@ async function parseError(res: Response): Promise<ApiError> {
 
 export async function apiFetch<T>(
   path: string,
-  init: RequestInit & { skipGate?: boolean } = {},
+  init: RequestInit & { skipGate?: boolean; skipAuthRedirect?: boolean } = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
   if (!(init.body instanceof FormData)) {
@@ -59,7 +65,19 @@ export async function apiFetch<T>(
 
   const res = await fetch(`${API_URL}${path}`, { ...init, headers });
   if (!res.ok) {
-    throw await parseError(res);
+    const err = await parseError(res);
+    // Session/gate expired mid-session: don't leave the panel blank — re-auth.
+    // `skipAuthRedirect` lets the challenge flow surface a wrong-secret 401 itself.
+    if (!init.skipAuthRedirect && typeof window !== "undefined") {
+      if (res.status === 401) {
+        // Access token expired/invalid → log out to the clinic login.
+        redirectToClinicLogin(localeFromPath(), { reauth: true });
+      } else if (res.status === 403 && err.body.code === "PLATFORM_GATE_REQUIRED") {
+        // Platform gate token expired → re-enter the gate secret.
+        redirectToChallenge(localeFromPath());
+      }
+    }
+    throw err;
   }
 
   const text = await res.text();
@@ -68,7 +86,7 @@ export async function apiFetch<T>(
 }
 
 export async function fetchGateStatus(): Promise<{ gate_configured: boolean }> {
-  return apiFetch("/api/v1/platform/auth/gate-status", { skipGate: true });
+  return apiFetch("/api/v1/platform/auth/gate-status", { skipGate: true, skipAuthRedirect: true });
 }
 
 export async function verifyPlatformGate(secret: string): Promise<{ gate_token: string; expires_in: number }> {
@@ -76,6 +94,7 @@ export async function verifyPlatformGate(secret: string): Promise<{ gate_token: 
     method: "POST",
     body: JSON.stringify({ secret }),
     skipGate: true,
+    skipAuthRedirect: true,
   });
 }
 

@@ -34,6 +34,18 @@ export function clearSession() {
   document.cookie = "dental_refresh=; path=/; max-age=0";
 }
 
+/** Drop only the platform-gate token (clinic session stays valid). */
+export function clearGateToken() {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(GATE);
+}
+
+/** Locale prefix from the current path (e.g. /en/tenants → "en"), default "en". */
+export function localeFromPath(): string {
+  if (typeof window === "undefined") return "en";
+  return window.location.pathname.match(/^\/([a-z]{2})(?:\/|$)/)?.[1] ?? "en";
+}
+
 export function hasPlatformSession(): boolean {
   return Boolean(getAccessToken());
 }
@@ -51,4 +63,10 @@ export function clinicLoginUrl(locale = "en", options?: { reauth?: boolean }): s
 export function redirectToClinicLogin(locale = "en", options?: { reauth?: boolean }): void {
   clearSession();
   window.location.href = clinicLoginUrl(locale, options);
+}
+
+/** Gate token expired but clinic session still valid → re-enter the gate secret. */
+export function redirectToChallenge(locale = "en"): void {
+  clearGateToken();
+  window.location.href = `/${locale}/challenge`;
 }
