@@ -670,7 +670,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
             <Button
               type="button"
               onClick={() => void submit()}
-              disabled={saving || iso2.length !== 2 || !hasValidLocales}
+              disabled={saving || iso2.length !== 2 || !hasValidLocales || !timezone.trim()}
             >
               {saving ? t("saving") : isEdit ? t("save") : t("save")}
             </Button>
