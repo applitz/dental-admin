@@ -1,12 +1,13 @@
 import {
   apiFetch,
   type MarketPack,
+  type MarketPackHoliday,
   type PlatformMarketDetail,
   type PlatformMarketSummary,
   type PlatformSettingItem,
 } from "./api";
 
-export type { MarketPack, PlatformMarketDetail, PlatformMarketSummary, PlatformSettingItem };
+export type { MarketPack, MarketPackHoliday, PlatformMarketDetail, PlatformMarketSummary, PlatformSettingItem };
 
 export async function listSettings(): Promise<{ items: PlatformSettingItem[]; groups: string[] }> {
   return apiFetch("/api/v1/platform/settings");
