@@ -20,49 +20,16 @@ type NumberStrategy = PlatformMarketDetail["number_strategy"];
 type SmsDirection = PlatformMarketDetail["sms_direction"];
 type EmailDirection = PlatformMarketDetail["email_direction"];
 
-const LOCALE_NAMES: Record<string, string> = { en: "English", de: "German" };
-const localeLabel = (loc: string) => LOCALE_NAMES[loc] ?? loc.toUpperCase();
+const NUMBER_STRATEGY_VALUES: NumberStrategy[] = ["local", "international", "none"];
 
-const NUMBER_STRATEGY_OPTIONS: { value: NumberStrategy; label: string; helper: string }[] = [
-  { value: "local", label: "Local", helper: "Every clinic automatically gets a local number." },
-  {
-    value: "international",
-    label: "International",
-    helper: "Clinics share one international number for this country.",
-  },
-  { value: "none", label: "None", helper: "No phone number is provisioned for this country's clinics." },
+const SMS_VALUES: { value: SmsDirection; needsLocal: boolean }[] = [
+  { value: "outbound", needsLocal: false },
+  { value: "both", needsLocal: true },
+  { value: "inbound", needsLocal: true },
+  { value: "none", needsLocal: false },
 ];
 
-const SMS_OPTIONS: { value: SmsDirection; label: string; helper: string; needsLocal: boolean }[] = [
-  {
-    value: "outbound",
-    label: "Outbound only",
-    helper: "Clinics send reminders; patients cannot reply.",
-    needsLocal: false,
-  },
-  { value: "both", label: "Both", helper: "Clinics send and receive SMS.", needsLocal: true },
-  {
-    value: "inbound",
-    label: "Inbound only",
-    helper: "Patients can text in; clinics don't send SMS out.",
-    needsLocal: true,
-  },
-  { value: "none", label: "None", helper: "SMS hidden completely for this country's clinics.", needsLocal: false },
-];
-
-const EMAIL_OPTIONS: { value: EmailDirection; label: string; helper: string }[] = [
-  { value: "both", label: "Both", helper: "Clinics send and receive email." },
-  { value: "outbound", label: "Outbound only", helper: "Clinics send email; replies aren't received." },
-  { value: "inbound", label: "Inbound only", helper: "Clinics receive email; can't send out." },
-  { value: "none", label: "None", helper: "Clinics get no email address at all." },
-];
-
-const STEP_LABEL: Record<Step, string> = {
-  country: "Country",
-  channels: "Channels",
-  holidays: "Holidays",
-  sms: "Telnyx SMS",
-};
+const EMAIL_VALUES: EmailDirection[] = ["both", "outbound", "inbound", "none"];
 
 type WizardProps = {
   featureCatalog: string[];
@@ -73,6 +40,8 @@ type WizardProps = {
 
 export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
   const t = useTranslations("markets");
+  const localeNames = t.raw("wizard.localeNames") as Record<string, string>;
+  const localeLabel = (loc: string) => localeNames[loc] ?? loc.toUpperCase();
   const isEdit = Boolean(initial);
   const [step, setStep] = useState<Step>("country");
   const [visited, setVisited] = useState<Set<Step>>(() => new Set<Step>(["country"]));
@@ -151,7 +120,15 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
           if (p.name) setName(p.name);
           if (p.dial_code) setDialCode(p.dial_code);
           if (p.currency) setCurrency(p.currency.toUpperCase());
-          if (p.timezones.length > 0) setTimezone(p.timezones[0]);
+          // Only auto-select the timezone when the country pack has exactly
+          // one option — for multi-zone countries, silently picking
+          // timezones[0] can land on the wrong zone, so leave it unset and
+          // force an explicit choice (see tzOptions select + Next-button gate).
+          if (p.timezones.length === 1) {
+            setTimezone(p.timezones[0]);
+          } else {
+            setTimezone("");
+          }
           setLocales(
             p.supported_locales.map((loc) => ({
               locale: loc,
@@ -162,7 +139,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
         }
       })
       .catch(() => {
-        if (!cancelled) setPackError("Could not load country defaults for this code.");
+        if (!cancelled) setPackError(t("wizard.packError"));
       })
       .finally(() => {
         if (!cancelled) setPackLoading(false);
@@ -176,7 +153,10 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
   const countryName = name.trim() || iso2;
 
   const toggleLocale = (locale: string, nextEnabled: boolean) => {
-    const msg = `${localeLabel(locale)} ${nextEnabled ? "added" : "removed"} for ${countryName}. Clinics and patient messages will use the default language. Continue?`;
+    const msg = t(nextEnabled ? "wizard.localeAddConfirm" : "wizard.localeRemoveConfirm", {
+      locale: localeLabel(locale),
+      country: countryName,
+    });
     if (!window.confirm(msg)) return;
     setLocales((prev) => {
       const exists = prev.some((l) => l.locale === locale);
@@ -190,7 +170,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
   };
 
   const changeDefaultLocale = (locale: string) => {
-    const msg = `${localeLabel(locale)} added for ${countryName}. Clinics and patient messages will use the default language. Continue?`;
+    const msg = t("wizard.localeAddConfirm", { locale: localeLabel(locale), country: countryName });
     if (!window.confirm(msg)) return;
     setLocales((prev) => {
       const exists = prev.some((l) => l.locale === locale);
@@ -265,16 +245,37 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
     if (timezone !== initial.default_timezone) body.default_timezone = timezone;
     if (currency.toUpperCase() !== initial.default_currency) body.default_currency = currency.toUpperCase();
 
+    // default_dial_code / compliance_notes / default_tax_rate are the three
+    // nullable optional fields the API actually clears on an explicit
+    // `field: null` in the PATCH payload. When one of these had an initial
+    // value and the admin empties the input, send null so the backend clears
+    // it — every other field keeps the omit-if-unchanged, never-null rule.
     const trimmedDial = dialCode.trim();
-    if (trimmedDial && trimmedDial !== (initial.default_dial_code ?? "")) body.default_dial_code = trimmedDial;
+    const initialDial = initial.default_dial_code ?? "";
+    if (trimmedDial && trimmedDial !== initialDial) {
+      body.default_dial_code = trimmedDial;
+    } else if (!trimmedDial && initialDial) {
+      body.default_dial_code = null;
+    }
 
     const trimmedCompliance = compliance.trim();
-    if (trimmedCompliance && trimmedCompliance !== (initial.compliance_notes ?? "")) {
+    const initialCompliance = initial.compliance_notes ?? "";
+    if (trimmedCompliance && trimmedCompliance !== initialCompliance) {
       body.compliance_notes = trimmedCompliance;
+    } else if (!trimmedCompliance && initialCompliance) {
+      body.compliance_notes = null;
     }
 
     const trimmedTax = taxRate.trim();
-    if (trimmedTax && trimmedTax !== (initial.default_tax_rate ?? "")) body.default_tax_rate = trimmedTax;
+    const initialTax = initial.default_tax_rate ?? "";
+    if (trimmedTax) {
+      // Compare numerically so "19.5" vs "19.50" isn't treated as a change.
+      if (initialTax === "" || parseFloat(trimmedTax) !== parseFloat(initialTax)) {
+        body.default_tax_rate = trimmedTax;
+      }
+    } else if (initialTax) {
+      body.default_tax_rate = null;
+    }
 
     if (numberStrategy !== initial.number_strategy) body.number_strategy = numberStrategy;
     if (smsDirection !== initial.sms_direction) body.sms_direction = smsDirection;
@@ -323,7 +324,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
               step === s ? "text-admin-700" : "text-slate-400 hover:text-slate-600",
             )}
           >
-            {i + 1}. {STEP_LABEL[s]}
+            {i + 1}. {t(`wizard.${s}`)}
           </button>
         ))}
       </div>
@@ -341,7 +342,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                 onChange={(e) => setIso2(e.target.value.toUpperCase())}
               />
             </Field>
-            {packLoading && <p className="text-xs text-slate-400">Loading country defaults…</p>}
+            {packLoading && <p className="text-xs text-slate-400">{t("wizard.packLoading")}</p>}
             {packError && <p className="text-xs text-amber-600">{packError}</p>}
             <Field label={t("fields.name")}>
               <input
@@ -358,7 +359,10 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
                   >
-                    {!tzOptions.includes(timezone) && timezone && <option value={timezone}>{timezone}</option>}
+                    {timezone === "" && <option value="">{t("wizard.timezoneSelectPlaceholder")}</option>}
+                    {timezone !== "" && !tzOptions.includes(timezone) && (
+                      <option value={timezone}>{timezone}</option>
+                    )}
                     {tzOptions.map((tz) => (
                       <option key={tz} value={tz}>
                         {tz}
@@ -370,7 +374,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
-                    placeholder="e.g. Europe/Vienna"
+                    placeholder={t("wizard.timezoneFreeformPlaceholder")}
                   />
                 )}
               </Field>
@@ -405,10 +409,10 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
             </Field>
 
             <div className="space-y-2 rounded-lg border border-slate-200 p-3">
-              <span className="block text-sm font-medium">Languages</span>
+              <span className="block text-sm font-medium">{t("wizard.localesTitle")}</span>
               {localeOptions.length === 0 ? (
                 <p className="text-sm text-slate-400">
-                  {packLoading ? "Loading language options…" : "Enter a country code to load language options."}
+                  {packLoading ? t("wizard.localesLoading") : t("wizard.localesEnterCode")}
                 </p>
               ) : (
                 <div className="space-y-1">
@@ -434,7 +438,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                             checked={isDefault}
                             onChange={() => changeDefaultLocale(loc)}
                           />
-                          Default
+                          {t("wizard.localeDefaultLabel")}
                         </label>
                       </div>
                     );
@@ -442,7 +446,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                 </div>
               )}
               {!hasValidLocales && (
-                <p className="text-xs text-amber-600">Select at least one language and mark one as default.</p>
+                <p className="text-xs text-amber-600">{t("wizard.localesValidationHint")}</p>
               )}
             </div>
           </>
@@ -451,27 +455,27 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
         {step === "channels" && (
           <div className="space-y-5">
             <fieldset className="space-y-2">
-              <legend className="mb-1 text-sm font-medium text-slate-700">Phone number for clinics</legend>
-              {NUMBER_STRATEGY_OPTIONS.map((opt) => (
-                <label key={opt.value} className="flex items-start gap-2 text-sm">
+              <legend className="mb-1 text-sm font-medium text-slate-700">{t("wizard.numberStrategyLegend")}</legend>
+              {NUMBER_STRATEGY_VALUES.map((value) => (
+                <label key={value} className="flex items-start gap-2 text-sm">
                   <input
                     type="radio"
                     name="number-strategy"
                     className="mt-1"
-                    checked={numberStrategy === opt.value}
-                    onChange={() => handleNumberStrategyChange(opt.value)}
+                    checked={numberStrategy === value}
+                    onChange={() => handleNumberStrategyChange(value)}
                   />
                   <span>
-                    <span className="block font-medium">{opt.label}</span>
-                    <span className="block text-xs text-slate-400">{opt.helper}</span>
+                    <span className="block font-medium">{t(`wizard.numberStrategy.${value}.label`)}</span>
+                    <span className="block text-xs text-slate-400">{t(`wizard.numberStrategy.${value}.helper`)}</span>
                   </span>
                 </label>
               ))}
             </fieldset>
 
             <fieldset className="space-y-2">
-              <legend className="mb-1 text-sm font-medium text-slate-700">SMS</legend>
-              {SMS_OPTIONS.map((opt) => {
+              <legend className="mb-1 text-sm font-medium text-slate-700">{t("wizard.smsLegend")}</legend>
+              {SMS_VALUES.map((opt) => {
                 const disabled = opt.needsLocal && numberStrategy !== "local";
                 return (
                   <label key={opt.value} className="flex items-start gap-2 text-sm">
@@ -484,33 +488,33 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                       onChange={() => handleSmsDirectionChange(opt.value)}
                     />
                     <span>
-                      <span className={cn("block font-medium", disabled && "text-slate-400")}>{opt.label}</span>
-                      <span className="block text-xs text-slate-400">{disabled ? "Needs local numbers." : opt.helper}</span>
+                      <span className={cn("block font-medium", disabled && "text-slate-400")}>
+                        {t(`wizard.smsDirection.${opt.value}.label`)}
+                      </span>
+                      <span className="block text-xs text-slate-400">
+                        {disabled ? t("wizard.smsNeedsLocal") : t(`wizard.smsDirection.${opt.value}.helper`)}
+                      </span>
                     </span>
                   </label>
                 );
               })}
-              {smsAutoReset && (
-                <p className="text-xs text-amber-600">
-                  SMS was reset to Outbound only because the number strategy no longer supports replies.
-                </p>
-              )}
+              {smsAutoReset && <p className="text-xs text-amber-600">{t("wizard.smsAutoReset")}</p>}
             </fieldset>
 
             <fieldset className="space-y-2">
-              <legend className="mb-1 text-sm font-medium text-slate-700">Email</legend>
-              {EMAIL_OPTIONS.map((opt) => (
-                <label key={opt.value} className="flex items-start gap-2 text-sm">
+              <legend className="mb-1 text-sm font-medium text-slate-700">{t("wizard.emailLegend")}</legend>
+              {EMAIL_VALUES.map((value) => (
+                <label key={value} className="flex items-start gap-2 text-sm">
                   <input
                     type="radio"
                     name="email-direction"
                     className="mt-1"
-                    checked={emailDirection === opt.value}
-                    onChange={() => setEmailDirection(opt.value)}
+                    checked={emailDirection === value}
+                    onChange={() => setEmailDirection(value)}
                   />
                   <span>
-                    <span className="block font-medium">{opt.label}</span>
-                    <span className="block text-xs text-slate-400">{opt.helper}</span>
+                    <span className="block font-medium">{t(`wizard.emailDirection.${value}.label`)}</span>
+                    <span className="block text-xs text-slate-400">{t(`wizard.emailDirection.${value}.helper`)}</span>
                   </span>
                 </label>
               ))}
@@ -524,14 +528,14 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                   disabled={numberStrategy === "none"}
                   onChange={(e) => setVoiceEnabled(e.target.checked)}
                 />
-                <span className="font-medium">Voice AI agent</span>
+                <span className="font-medium">{t("wizard.voiceAgentLabel")}</span>
               </label>
               <p className="ml-6 text-xs text-slate-400">
-                {numberStrategy === "none" ? "Needs a phone number." : "Lets patients call and be triaged by AI."}
+                {numberStrategy === "none" ? t("wizard.voiceAgentNeedsNumber") : t("wizard.voiceAgentHelper")}
               </p>
             </div>
 
-            <Field label="Default tax rate (%)">
+            <Field label={t("fields.taxRate")}>
               <input
                 type="number"
                 min={0}
@@ -546,19 +550,19 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
             <div>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-                <span className="font-medium">Launch active</span>
+                <span className="font-medium">{t("wizard.launchActiveLabel")}</span>
               </label>
-              <p className="ml-6 text-xs text-slate-400">Nothing happens for this country until active.</p>
+              <p className="ml-6 text-xs text-slate-400">{t("wizard.launchActiveHelper")}</p>
             </div>
           </div>
         )}
 
         {step === "holidays" && (
           <div className="space-y-3">
-            <p className="text-sm text-slate-500">Unchecked holidays will NOT close clinics.</p>
+            <p className="text-sm text-slate-500">{t("wizard.holidaysNote")}</p>
             {pack === null || pack.holidays.length === 0 ? (
               <p className="text-sm text-slate-400">
-                {packLoading ? "Loading holidays…" : "No holidays available for this country yet."}
+                {packLoading ? t("wizard.holidaysLoading") : t("wizard.holidaysEmpty")}
               </p>
             ) : (
               <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
@@ -655,7 +659,10 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
             <Button
               type="button"
               onClick={() => goTo(STEPS[stepIndex + 1])}
-              disabled={step === "country" && (iso2.length !== 2 || name.trim().length < 2 || !hasValidLocales)}
+              disabled={
+                step === "country" &&
+                (iso2.length !== 2 || name.trim().length < 2 || !hasValidLocales || !timezone.trim())
+              }
             >
               {t("next")}
             </Button>

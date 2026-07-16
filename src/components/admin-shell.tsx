@@ -306,32 +306,12 @@ function SettingsView() {
   );
 }
 
-const NUMBER_STRATEGY_LABELS: Record<PlatformMarketSummary["number_strategy"], string> = {
-  local: "local",
-  international: "international",
-  none: "no number",
-};
-
-const SMS_DIRECTION_LABELS: Record<PlatformMarketSummary["sms_direction"], string> = {
-  outbound: "SMS out",
-  both: "SMS both",
-  inbound: "SMS in",
-  none: "SMS off",
-};
-
-const EMAIL_DIRECTION_LABELS: Record<PlatformMarketSummary["email_direction"], string> = {
-  both: "email both",
-  outbound: "email out",
-  inbound: "email in",
-  none: "email off",
-};
-
-function channelSummary(m: PlatformMarketSummary): string {
+function channelSummary(m: PlatformMarketSummary, t: ReturnType<typeof useTranslations>): string {
   return [
-    NUMBER_STRATEGY_LABELS[m.number_strategy],
-    SMS_DIRECTION_LABELS[m.sms_direction],
-    EMAIL_DIRECTION_LABELS[m.email_direction],
-    m.voice_agent_enabled ? "voice ✓" : "voice –",
+    t(`channelSummary.numberStrategy.${m.number_strategy}`),
+    t(`channelSummary.smsDirection.${m.sms_direction}`),
+    t(`channelSummary.emailDirection.${m.email_direction}`),
+    m.voice_agent_enabled ? t("channelSummary.voiceOn") : t("channelSummary.voiceOff"),
   ].join(" · ");
 }
 
@@ -449,9 +429,9 @@ function MarketsView() {
                   <span className="ml-2 text-xs text-slate-400">{m.iso2}</span>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                     <span className={m.is_active ? "font-medium text-emerald-600" : "text-slate-400"}>
-                      {m.is_active ? "Active" : "Inactive"}
+                      {m.is_active ? t("active") : t("inactive")}
                     </span>
-                    <span className="text-slate-400">{channelSummary(m)}</span>
+                    <span className="text-slate-400">{channelSummary(m, t)}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3">{m.locale_count}</td>

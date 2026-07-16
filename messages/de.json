@@ -192,6 +192,29 @@
     "delete": "Löschen",
     "confirmDelete": "Diesen Länder-Override entfernen? Für das Land gelten dann Plattform-Defaults.",
     "deleteError": "Länder-Override konnte nicht gelöscht werden",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "channelSummary": {
+      "numberStrategy": {
+        "local": "lokal",
+        "international": "international",
+        "none": "keine Nummer"
+      },
+      "smsDirection": {
+        "outbound": "SMS ausgehend",
+        "both": "SMS beidseitig",
+        "inbound": "SMS eingehend",
+        "none": "SMS aus"
+      },
+      "emailDirection": {
+        "both": "E-Mail beidseitig",
+        "outbound": "E-Mail ausgehend",
+        "inbound": "E-Mail eingehend",
+        "none": "E-Mail aus"
+      },
+      "voiceOn": "Voice ✓",
+      "voiceOff": "Voice –"
+    },
     "fields": {
       "iso2": "Ländercode (ISO-2)",
       "name": "Anzeigename",
@@ -199,6 +222,7 @@
       "currency": "Währung",
       "dialCode": "Standard-Vorwahl",
       "compliance": "Compliance-Hinweise",
+      "taxRate": "Standard-Steuersatz (%)",
       "senderType": "Absendertyp",
       "senderId": "Absender-ID",
       "senderIdPlaceholder": "Leer lassen für Plattform-Standard",
@@ -207,9 +231,89 @@
     },
     "wizard": {
       "country": "Land",
+      "channels": "Kanäle",
+      "holidays": "Feiertage",
       "sms": "Telnyx SMS",
       "countryHint": "Land wählen, um optional Telecom-Einstellungen zu überschreiben. Registrierung ist weltweit möglich, auch ohne Eintrag hier.",
-      "smsHint": "OTP- und Patienten-SMS-Absender für dieses Land. Leere Felder fallen auf Plattform-Defaults zurück."
+      "smsHint": "OTP- und Patienten-SMS-Absender für dieses Land. Leere Felder fallen auf Plattform-Defaults zurück.",
+      "packLoading": "Länder-Defaults werden geladen…",
+      "packError": "Länder-Defaults für diesen Code konnten nicht geladen werden.",
+      "timezoneFreeformPlaceholder": "z. B. Europe/Vienna",
+      "timezoneSelectPlaceholder": "Zeitzone wählen…",
+      "localesTitle": "Sprachen",
+      "localesLoading": "Sprachoptionen werden geladen…",
+      "localesEnterCode": "Ländercode eingeben, um Sprachoptionen zu laden.",
+      "localeDefaultLabel": "Standard",
+      "localesValidationHint": "Mindestens eine Sprache auswählen und eine als Standard markieren.",
+      "localeAddConfirm": "{locale} wurde für {country} hinzugefügt. Kliniken und Patientennachrichten verwenden die Standardsprache. Fortfahren?",
+      "localeRemoveConfirm": "{locale} wurde für {country} entfernt. Kliniken und Patientennachrichten verwenden die Standardsprache. Fortfahren?",
+      "localeNames": {
+        "en": "Englisch",
+        "de": "Deutsch"
+      },
+      "numberStrategyLegend": "Telefonnummer für Kliniken",
+      "numberStrategy": {
+        "local": {
+          "label": "Lokal",
+          "helper": "Jede Klinik erhält automatisch eine lokale Nummer."
+        },
+        "international": {
+          "label": "International",
+          "helper": "Kliniken teilen sich eine internationale Nummer für dieses Land."
+        },
+        "none": {
+          "label": "Keine",
+          "helper": "Für die Kliniken dieses Landes wird keine Telefonnummer bereitgestellt."
+        }
+      },
+      "smsLegend": "SMS",
+      "smsDirection": {
+        "outbound": {
+          "label": "Nur ausgehend",
+          "helper": "Kliniken senden Erinnerungen; Patienten können nicht antworten."
+        },
+        "both": {
+          "label": "Beidseitig",
+          "helper": "Kliniken senden und empfangen SMS."
+        },
+        "inbound": {
+          "label": "Nur eingehend",
+          "helper": "Patienten können per SMS schreiben; Kliniken senden keine SMS."
+        },
+        "none": {
+          "label": "Keine",
+          "helper": "SMS ist für die Kliniken dieses Landes vollständig ausgeblendet."
+        }
+      },
+      "smsNeedsLocal": "Erfordert lokale Nummern.",
+      "smsAutoReset": "SMS wurde auf „Nur ausgehend“ zurückgesetzt, da die Nummernstrategie keine Antworten mehr unterstützt.",
+      "emailLegend": "E-Mail",
+      "emailDirection": {
+        "both": {
+          "label": "Beidseitig",
+          "helper": "Kliniken senden und empfangen E-Mails."
+        },
+        "outbound": {
+          "label": "Nur ausgehend",
+          "helper": "Kliniken senden E-Mails; Antworten werden nicht empfangen."
+        },
+        "inbound": {
+          "label": "Nur eingehend",
+          "helper": "Kliniken empfangen E-Mails; können nicht senden."
+        },
+        "none": {
+          "label": "Keine",
+          "helper": "Kliniken erhalten keine E-Mail-Adresse."
+        }
+      },
+      "voiceAgentLabel": "Voice-KI-Agent",
+      "voiceAgentNeedsNumber": "Erfordert eine Telefonnummer.",
+      "voiceAgentHelper": "Ermöglicht Patienten anzurufen und per KI vorqualifiziert zu werden.",
+      "launchActiveLabel": "Aktiv starten",
+      "launchActiveHelper": "Für dieses Land passiert nichts, bis es aktiv ist.",
+      "holidaysNote": "Nicht angehakte Feiertage schließen die Kliniken NICHT.",
+      "holidaysLoading": "Feiertage werden geladen…",
+      "holidaysEmpty": "Für dieses Land sind noch keine Feiertage verfügbar."
     }
   },
   "plans": {

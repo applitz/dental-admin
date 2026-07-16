@@ -192,6 +192,29 @@
     "delete": "Delete",
     "confirmDelete": "Remove this country override? Platform defaults will apply for that country.",
     "deleteError": "Could not delete country override",
+    "active": "Active",
+    "inactive": "Inactive",
+    "channelSummary": {
+      "numberStrategy": {
+        "local": "local",
+        "international": "international",
+        "none": "no number"
+      },
+      "smsDirection": {
+        "outbound": "SMS out",
+        "both": "SMS both",
+        "inbound": "SMS in",
+        "none": "SMS off"
+      },
+      "emailDirection": {
+        "both": "email both",
+        "outbound": "email out",
+        "inbound": "email in",
+        "none": "email off"
+      },
+      "voiceOn": "voice ✓",
+      "voiceOff": "voice –"
+    },
     "fields": {
       "iso2": "Country code (ISO-2)",
       "name": "Display name",
@@ -199,6 +222,7 @@
       "currency": "Currency",
       "dialCode": "Default dial code",
       "compliance": "Compliance notes",
+      "taxRate": "Default tax rate (%)",
       "senderType": "Sender type",
       "senderId": "Sender ID",
       "senderIdPlaceholder": "Leave empty to use platform default",
@@ -207,9 +231,89 @@
     },
     "wizard": {
       "country": "Country",
+      "channels": "Channels",
+      "holidays": "Holidays",
       "sms": "Telnyx SMS",
       "countryHint": "Pick a country to optionally override telecom settings. Signup is available worldwide without adding a row here.",
-      "smsHint": "Configure OTP and patient SMS senders for this country. Empty fields fall back to platform defaults."
+      "smsHint": "Configure OTP and patient SMS senders for this country. Empty fields fall back to platform defaults.",
+      "packLoading": "Loading country defaults…",
+      "packError": "Could not load country defaults for this code.",
+      "timezoneFreeformPlaceholder": "e.g. Europe/Vienna",
+      "timezoneSelectPlaceholder": "Select a timezone…",
+      "localesTitle": "Languages",
+      "localesLoading": "Loading language options…",
+      "localesEnterCode": "Enter a country code to load language options.",
+      "localeDefaultLabel": "Default",
+      "localesValidationHint": "Select at least one language and mark one as default.",
+      "localeAddConfirm": "{locale} added for {country}. Clinics and patient messages will use the default language. Continue?",
+      "localeRemoveConfirm": "{locale} removed for {country}. Clinics and patient messages will use the default language. Continue?",
+      "localeNames": {
+        "en": "English",
+        "de": "German"
+      },
+      "numberStrategyLegend": "Phone number for clinics",
+      "numberStrategy": {
+        "local": {
+          "label": "Local",
+          "helper": "Every clinic automatically gets a local number."
+        },
+        "international": {
+          "label": "International",
+          "helper": "Clinics share one international number for this country."
+        },
+        "none": {
+          "label": "None",
+          "helper": "No phone number is provisioned for this country's clinics."
+        }
+      },
+      "smsLegend": "SMS",
+      "smsDirection": {
+        "outbound": {
+          "label": "Outbound only",
+          "helper": "Clinics send reminders; patients cannot reply."
+        },
+        "both": {
+          "label": "Both",
+          "helper": "Clinics send and receive SMS."
+        },
+        "inbound": {
+          "label": "Inbound only",
+          "helper": "Patients can text in; clinics don't send SMS out."
+        },
+        "none": {
+          "label": "None",
+          "helper": "SMS hidden completely for this country's clinics."
+        }
+      },
+      "smsNeedsLocal": "Needs local numbers.",
+      "smsAutoReset": "SMS was reset to Outbound only because the number strategy no longer supports replies.",
+      "emailLegend": "Email",
+      "emailDirection": {
+        "both": {
+          "label": "Both",
+          "helper": "Clinics send and receive email."
+        },
+        "outbound": {
+          "label": "Outbound only",
+          "helper": "Clinics send email; replies aren't received."
+        },
+        "inbound": {
+          "label": "Inbound only",
+          "helper": "Clinics receive email; can't send out."
+        },
+        "none": {
+          "label": "None",
+          "helper": "Clinics get no email address at all."
+        }
+      },
+      "voiceAgentLabel": "Voice AI agent",
+      "voiceAgentNeedsNumber": "Needs a phone number.",
+      "voiceAgentHelper": "Lets patients call and be triaged by AI.",
+      "launchActiveLabel": "Launch active",
+      "launchActiveHelper": "Nothing happens for this country until active.",
+      "holidaysNote": "Unchecked holidays will NOT close clinics.",
+      "holidaysLoading": "Loading holidays…",
+      "holidaysEmpty": "No holidays available for this country yet."
     }
   },
   "plans": {
