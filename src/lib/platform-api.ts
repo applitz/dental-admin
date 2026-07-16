@@ -1,11 +1,12 @@
 import {
   apiFetch,
+  type MarketPack,
   type PlatformMarketDetail,
   type PlatformMarketSummary,
   type PlatformSettingItem,
 } from "./api";
 
-export type { PlatformMarketDetail, PlatformMarketSummary, PlatformSettingItem };
+export type { MarketPack, PlatformMarketDetail, PlatformMarketSummary, PlatformSettingItem };
 
 export async function listSettings(): Promise<{ items: PlatformSettingItem[]; groups: string[] }> {
   return apiFetch("/api/v1/platform/settings");
@@ -28,6 +29,11 @@ export async function listMarkets(): Promise<{
 
 export async function getMarket(iso2: string): Promise<PlatformMarketDetail> {
   return apiFetch(`/api/v1/platform/markets/${iso2}`);
+}
+
+export async function getMarketPack(iso2: string, subdivision?: string): Promise<MarketPack> {
+  const qs = subdivision ? `?subdivision=${encodeURIComponent(subdivision)}` : "";
+  return apiFetch(`/api/v1/platform/market-pack/${encodeURIComponent(iso2)}${qs}`);
 }
 
 export async function createMarket(body: Record<string, unknown>): Promise<PlatformMarketDetail> {

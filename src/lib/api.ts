@@ -207,6 +207,10 @@ export type PlatformMarketSummary = {
   locale_count: number;
   feature_count: number;
   sms_count?: number;
+  number_strategy: "local" | "international" | "none";
+  sms_direction: "none" | "outbound" | "inbound" | "both";
+  email_direction: "none" | "outbound" | "inbound" | "both";
+  voice_agent_enabled: boolean;
 };
 
 export type PlatformMarketDetail = PlatformMarketSummary & {
@@ -216,4 +220,21 @@ export type PlatformMarketDetail = PlatformMarketSummary & {
   features: PlatformMarketFeature[];
   created_at: string;
   updated_at: string;
+  currency_symbol: string;
+  holiday_subdivision: string | null;
+  holidays_excluded: string[];
+  default_tax_rate: string | null;
+};
+
+export type MarketPackHoliday = { key: string; name: string; date: string };
+
+export type MarketPack = {
+  iso2: string;
+  name: string | null;
+  dial_code: string | null;
+  currency: string | null;
+  currency_symbol: string;
+  timezones: string[];
+  holidays: MarketPackHoliday[];
+  supported_locales: string[];
 };
