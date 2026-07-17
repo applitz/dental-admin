@@ -175,6 +175,24 @@ export function PlanWizard({
     });
   };
 
+  const renderCapabilityRow = (c: CapabilityCatalogItem) => (
+    <label key={c.key}
+      className={`flex items-start gap-2 text-sm ${c.available ? "" : "opacity-50"}`}>
+      <input type="checkbox" className="mt-0.5" disabled={!c.available}
+        checked={selectedCapabilities.has(c.key)}
+        onChange={() => toggleCapability(c.key, c.available)} />
+      <span>
+        <span className="block">
+          {c.name} <span className="text-xs text-slate-500">({c.cost_label})</span>
+          {!c.available && (
+            <span className="ml-2 text-xs italic text-slate-400">{t("comingSoon")}</span>
+          )}
+        </span>
+        <span className="block text-xs text-slate-500">{c.description}</span>
+      </span>
+    </label>
+  );
+
   const submit = async () => {
     setBusy(true); setError(null);
     const filteredPrices = prices
@@ -190,7 +208,12 @@ export function PlanWizard({
     const availableCapabilityKeys = new Set(
       capabilityCatalog.filter((c) => c.available).map((c) => c.key),
     );
-    const managedCapabilities = [...selectedCapabilities].filter((k) => availableCapabilityKeys.has(k));
+    // If the catalog hasn't loaded (or failed to load), don't filter — an empty
+    // catalog would otherwise make this strip every capability from the plan.
+    const managedCapabilities =
+      capabilityCatalog.length > 0
+        ? [...selectedCapabilities].filter((k) => availableCapabilityKeys.has(k))
+        : [...selectedCapabilities];
     const featuresJson: Record<string, unknown> = {
       ...unknownKeys,
       max_users: unlimitedUsers ? null : Math.max(1, Math.floor(Number(maxUsers) || 1)),
@@ -322,41 +345,14 @@ export function PlanWizard({
         <div className="space-y-2">
           <span className="block text-xs font-medium uppercase text-slate-500">{t("capabilitiesComms")}</span>
           <div className="space-y-1.5">
-            {commsCapabilities.map((c) => (
-              <label key={c.key} className="flex items-start gap-2 text-sm">
-                <input type="checkbox" className="mt-0.5" checked={selectedCapabilities.has(c.key)}
-                  onChange={() => toggleCapability(c.key, c.available)} />
-                <span>
-                  <span className="block">
-                    {c.name} <span className="text-xs text-slate-500">({c.cost_label})</span>
-                  </span>
-                  <span className="block text-xs text-slate-500">{c.description}</span>
-                </span>
-              </label>
-            ))}
+            {commsCapabilities.map(renderCapabilityRow)}
           </div>
         </div>
 
         <div className="space-y-2">
           <span className="block text-xs font-medium uppercase text-slate-500">{t("capabilitiesAi")}</span>
           <div className="space-y-1.5">
-            {aiCapabilities.map((c) => (
-              <label key={c.key}
-                className={`flex items-start gap-2 text-sm ${c.available ? "" : "opacity-50"}`}>
-                <input type="checkbox" className="mt-0.5" disabled={!c.available}
-                  checked={selectedCapabilities.has(c.key)}
-                  onChange={() => toggleCapability(c.key, c.available)} />
-                <span>
-                  <span className="block">
-                    {c.name} <span className="text-xs text-slate-500">({c.cost_label})</span>
-                    {!c.available && (
-                      <span className="ml-2 text-xs italic text-slate-400">{t("comingSoon")}</span>
-                    )}
-                  </span>
-                  <span className="block text-xs text-slate-500">{c.description}</span>
-                </span>
-              </label>
-            ))}
+            {aiCapabilities.map(renderCapabilityRow)}
           </div>
         </div>
       </div>
