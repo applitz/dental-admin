@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  createPlan, updatePlan, getModuleCatalog,
-  type Plan, type PlanPrice, type ModuleCatalogItem,
+  createPlan, updatePlan, getModuleCatalog, getCapabilityCatalog,
+  type Plan, type PlanPrice, type ModuleCatalogItem, type CapabilityCatalogItem,
 } from "@/lib/platform-api";
 
 const CURRENCIES = ["EUR", "USD", "GBP", "CHF"];
@@ -18,7 +18,9 @@ const MODULE_KEYS_FALLBACK = [
 // Kept for parseFeatures, which runs synchronously before the catalog fetch resolves.
 const MODULES = MODULE_KEYS_FALLBACK;
 
-const MANAGED_KEYS = new Set(["max_practices", "max_users", "modules", "rbac", "priority_support"]);
+const MANAGED_KEYS = new Set([
+  "max_practices", "max_users", "max_patients", "modules", "capabilities", "rbac", "priority_support",
+]);
 
 function parseFeatures(featuresJson: Record<string, unknown> | undefined) {
   const obj = featuresJson ?? {};
@@ -31,6 +33,21 @@ function parseFeatures(featuresJson: Record<string, unknown> | undefined) {
   if ("max_users" in obj) {
     if (obj.max_users === null) unlimitedUsers = true;
     else if (typeof obj.max_users === "number") maxUsers = obj.max_users;
+  }
+
+  let unlimitedPatients = false;
+  let maxPatients = 100;
+  if ("max_patients" in obj) {
+    if (obj.max_patients === null) unlimitedPatients = true;
+    else if (typeof obj.max_patients === "number") maxPatients = obj.max_patients;
+  }
+
+  const selectedCapabilities = new Set<string>();
+  const capabilitiesVal = obj.capabilities;
+  if (Array.isArray(capabilitiesVal)) {
+    for (const c of capabilitiesVal) {
+      if (typeof c === "string") selectedCapabilities.add(c);
+    }
   }
 
   const selectedModules = new Set<string>();
@@ -57,8 +74,8 @@ function parseFeatures(featuresJson: Record<string, unknown> | undefined) {
   }
 
   return {
-    unlimitedUsers, maxUsers,
-    selectedModules, unknownModules, rbac, prioritySupport, unknownKeys,
+    unlimitedUsers, maxUsers, unlimitedPatients, maxPatients,
+    selectedModules, unknownModules, selectedCapabilities, rbac, prioritySupport, unknownKeys,
   };
 }
 
@@ -85,6 +102,23 @@ export function PlanWizard({
   const moduleCatalogMap = new Map(moduleCatalog.map((m) => [m.key, m]));
   const moduleKeys = moduleCatalog.length > 0 ? moduleCatalog.map((m) => m.key) : MODULE_KEYS_FALLBACK;
 
+  const [capabilityCatalog, setCapabilityCatalog] = useState<CapabilityCatalogItem[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    getCapabilityCatalog()
+      .then((items) => {
+        if (!cancelled) setCapabilityCatalog(items);
+      })
+      .catch(() => {
+        // No fallback list: the section simply renders empty if the catalog can't be fetched.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const commsCapabilities = capabilityCatalog.filter((c) => c.group === "comms");
+  const aiCapabilities = capabilityCatalog.filter((c) => c.group === "ai");
+
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -95,8 +129,13 @@ export function PlanWizard({
   const initialFeatures = parseFeatures(initial?.features_json);
   const [unlimitedUsers, setUnlimitedUsers] = useState(initialFeatures.unlimitedUsers);
   const [maxUsers, setMaxUsers] = useState(initialFeatures.maxUsers);
+  const [unlimitedPatients, setUnlimitedPatients] = useState(initialFeatures.unlimitedPatients);
+  const [maxPatients, setMaxPatients] = useState(initialFeatures.maxPatients);
   const [selectedModules, setSelectedModules] = useState<Set<string>>(initialFeatures.selectedModules);
   const [unknownModules] = useState<string[]>(initialFeatures.unknownModules);
+  const [selectedCapabilities, setSelectedCapabilities] = useState<Set<string>>(
+    initialFeatures.selectedCapabilities,
+  );
   const [unknownKeys] = useState<Record<string, unknown>>(initialFeatures.unknownKeys);
   const [rbac, setRbac] = useState(initialFeatures.rbac);
   const [prioritySupport, setPrioritySupport] = useState(initialFeatures.prioritySupport);
@@ -126,6 +165,16 @@ export function PlanWizard({
   const toggleSelectAll = (checked: boolean) =>
     setSelectedModules(checked ? new Set(moduleKeys) : new Set());
 
+  const toggleCapability = (key: string, available: boolean) => {
+    if (!available) return;
+    setSelectedCapabilities((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   const submit = async () => {
     setBusy(true); setError(null);
     const filteredPrices = prices
@@ -138,10 +187,16 @@ export function PlanWizard({
       setBusy(false); setError(t("wizard.needPrice")); return;
     }
     const managedModules = allModulesSelected ? ["all"] : [...selectedModules, ...unknownModules];
+    const availableCapabilityKeys = new Set(
+      capabilityCatalog.filter((c) => c.available).map((c) => c.key),
+    );
+    const managedCapabilities = [...selectedCapabilities].filter((k) => availableCapabilityKeys.has(k));
     const featuresJson: Record<string, unknown> = {
       ...unknownKeys,
       max_users: unlimitedUsers ? null : Math.max(1, Math.floor(Number(maxUsers) || 1)),
+      max_patients: unlimitedPatients ? null : Math.max(1, Math.floor(Number(maxPatients) || 1)),
       modules: managedModules,
+      capabilities: managedCapabilities,
       ...(rbac ? { rbac: true } : {}),
       ...(prioritySupport ? { priority_support: true } : {}),
     };
@@ -216,6 +271,17 @@ export function PlanWizard({
               {t("unlimited")}
             </label>
           </label>
+          <label className="text-sm">
+            <span className="mb-1 block text-slate-500">{t("maxPatients")}</span>
+            <input type="number" min="1" disabled={unlimitedPatients}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50"
+              value={maxPatients} onChange={(e) => setMaxPatients(Number(e.target.value))} />
+            <label className="mt-1 flex items-center gap-2 text-slate-500">
+              <input type="checkbox" checked={unlimitedPatients}
+                onChange={(e) => setUnlimitedPatients(e.target.checked)} />
+              {t("unlimited")}
+            </label>
+          </label>
         </div>
       </div>
 
@@ -244,6 +310,54 @@ export function PlanWizard({
               </label>
             );
           })}
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-lg border border-slate-200 p-3">
+        <div>
+          <span className="block text-sm font-medium">{t("capabilitiesTitle")}</span>
+          <span className="block text-xs text-slate-500">{t("capabilitiesHelper")}</span>
+        </div>
+
+        <div className="space-y-2">
+          <span className="block text-xs font-medium uppercase text-slate-500">{t("capabilitiesComms")}</span>
+          <div className="space-y-1.5">
+            {commsCapabilities.map((c) => (
+              <label key={c.key} className="flex items-start gap-2 text-sm">
+                <input type="checkbox" className="mt-0.5" checked={selectedCapabilities.has(c.key)}
+                  onChange={() => toggleCapability(c.key, c.available)} />
+                <span>
+                  <span className="block">
+                    {c.name} <span className="text-xs text-slate-500">({c.cost_label})</span>
+                  </span>
+                  <span className="block text-xs text-slate-500">{c.description}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <span className="block text-xs font-medium uppercase text-slate-500">{t("capabilitiesAi")}</span>
+          <div className="space-y-1.5">
+            {aiCapabilities.map((c) => (
+              <label key={c.key}
+                className={`flex items-start gap-2 text-sm ${c.available ? "" : "opacity-50"}`}>
+                <input type="checkbox" className="mt-0.5" disabled={!c.available}
+                  checked={selectedCapabilities.has(c.key)}
+                  onChange={() => toggleCapability(c.key, c.available)} />
+                <span>
+                  <span className="block">
+                    {c.name} <span className="text-xs text-slate-500">({c.cost_label})</span>
+                    {!c.available && (
+                      <span className="ml-2 text-xs italic text-slate-400">{t("comingSoon")}</span>
+                    )}
+                  </span>
+                  <span className="block text-xs text-slate-500">{c.description}</span>
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
       </div>
 

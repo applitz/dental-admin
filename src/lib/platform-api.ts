@@ -1,5 +1,6 @@
 import {
   apiFetch,
+  type CapabilityCatalogItem,
   type MarketPack,
   type MarketPackHoliday,
   type PlatformMarketDetail,
@@ -7,7 +8,14 @@ import {
   type PlatformSettingItem,
 } from "./api";
 
-export type { MarketPack, MarketPackHoliday, PlatformMarketDetail, PlatformMarketSummary, PlatformSettingItem };
+export type {
+  CapabilityCatalogItem,
+  MarketPack,
+  MarketPackHoliday,
+  PlatformMarketDetail,
+  PlatformMarketSummary,
+  PlatformSettingItem,
+};
 
 export async function listSettings(): Promise<{ items: PlatformSettingItem[]; groups: string[] }> {
   return apiFetch("/api/v1/platform/settings");
@@ -125,4 +133,9 @@ export type ModuleCatalogItem = { key: string; name: string; description: string
 export async function getModuleCatalog(): Promise<ModuleCatalogItem[]> {
   const res = await apiFetch<{ modules: ModuleCatalogItem[] }>(`${PLANS}/module-catalog`);
   return res.modules;
+}
+
+export async function getCapabilityCatalog(): Promise<CapabilityCatalogItem[]> {
+  const res = await apiFetch<{ capabilities: CapabilityCatalogItem[] }>(`${PLANS}/capability-catalog`);
+  return res.capabilities;
 }

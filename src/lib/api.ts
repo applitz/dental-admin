@@ -238,3 +238,12 @@ export type MarketPack = {
   holidays: MarketPackHoliday[];
   supported_locales: string[];
 };
+
+export type CapabilityCatalogItem = {
+  key: string;
+  name: string;
+  description: string;
+  cost_label: string;
+  group: "comms" | "ai";
+  available: boolean;
+};
