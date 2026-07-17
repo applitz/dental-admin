@@ -1,17 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { createPlan, updatePlan, type Plan, type PlanPrice } from "@/lib/platform-api";
+import {
+  createPlan, updatePlan, getModuleCatalog,
+  type Plan, type PlanPrice, type ModuleCatalogItem,
+} from "@/lib/platform-api";
 
 const CURRENCIES = ["EUR", "USD", "GBP", "CHF"];
 const INTERVALS: PlanPrice["interval"][] = ["month", "year"];
 
-const MODULES = [
-  "calendar", "patients", "clinical", "ortho", "prescriptions", "documents",
-  "billing", "payments", "insurance", "comms", "analytics", "inventory",
-  "lab", "telemed",
+const MODULE_KEYS_FALLBACK = [
+  "calendar", "patients", "clinical", "prescriptions", "documents",
+  "billing", "payments", "insurance", "comms", "analytics",
 ];
+
+// Kept for parseFeatures, which runs synchronously before the catalog fetch resolves.
+const MODULES = MODULE_KEYS_FALLBACK;
 
 const MANAGED_KEYS = new Set(["max_practices", "max_users", "modules", "rbac", "priority_support"]);
 
@@ -66,6 +71,24 @@ export function PlanWizard({
 }: { initial?: Plan; onDone: () => void; onCancel: () => void }) {
   const t = useTranslations("plans");
   const isEdit = !!initial;
+
+  const [moduleCatalog, setModuleCatalog] = useState<ModuleCatalogItem[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    getModuleCatalog()
+      .then((items) => {
+        if (!cancelled) setModuleCatalog(items);
+      })
+      .catch(() => {
+        // Fall back to MODULE_KEYS_FALLBACK below if the catalog can't be fetched.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const moduleCatalogMap = new Map(moduleCatalog.map((m) => [m.key, m]));
+  const moduleKeys = moduleCatalog.length > 0 ? moduleCatalog.map((m) => m.key) : MODULE_KEYS_FALLBACK;
+
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
@@ -96,7 +119,7 @@ export function PlanWizard({
   const setPrice = (i: number, patch: Partial<PlanPrice>) =>
     setPrices((p) => p.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
 
-  const allModulesSelected = unknownModules.length === 0 && selectedModules.size === MODULES.length;
+  const allModulesSelected = unknownModules.length === 0 && selectedModules.size === moduleKeys.length;
 
   const toggleModule = (m: string) =>
     setSelectedModules((prev) => {
@@ -107,7 +130,7 @@ export function PlanWizard({
     });
 
   const toggleSelectAll = (checked: boolean) =>
-    setSelectedModules(checked ? new Set(MODULES) : new Set());
+    setSelectedModules(checked ? new Set(moduleKeys) : new Set());
 
   const submit = async () => {
     setBusy(true); setError(null);
@@ -224,13 +247,21 @@ export function PlanWizard({
           </label>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {MODULES.map((m) => (
-            <label key={m} className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={selectedModules.has(m)}
-                onChange={() => toggleModule(m)} />
-              {t(`modules.${m}`)}
-            </label>
-          ))}
+          {moduleKeys.map((m) => {
+            const catalogEntry = moduleCatalogMap.get(m);
+            return (
+              <label key={m} className="flex items-start gap-2 text-sm">
+                <input type="checkbox" className="mt-0.5" checked={selectedModules.has(m)}
+                  onChange={() => toggleModule(m)} />
+                <span>
+                  <span className="block">{catalogEntry?.name ?? t(`modules.${m}`)}</span>
+                  {catalogEntry?.description && (
+                    <span className="block text-xs text-slate-500">{catalogEntry.description}</span>
+                  )}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </div>
 

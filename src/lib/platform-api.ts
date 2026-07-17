@@ -119,3 +119,10 @@ export function updatePlan(
 ): Promise<Plan> {
   return apiFetch(`${PLANS}/${slug}`, { method: "PATCH", body: JSON.stringify(body) });
 }
+
+export type ModuleCatalogItem = { key: string; name: string; description: string };
+
+export async function getModuleCatalog(): Promise<ModuleCatalogItem[]> {
+  const res = await apiFetch<{ modules: ModuleCatalogItem[] }>(`${PLANS}/module-catalog`);
+  return res.modules;
+}
