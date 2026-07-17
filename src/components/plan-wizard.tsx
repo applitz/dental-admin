@@ -23,13 +23,9 @@ const MANAGED_KEYS = new Set(["max_practices", "max_users", "modules", "rbac", "
 function parseFeatures(featuresJson: Record<string, unknown> | undefined) {
   const obj = featuresJson ?? {};
 
-  let unlimitedPractices = false;
-  let maxPractices = 1;
-  if ("max_practices" in obj) {
-    if (obj.max_practices === null) unlimitedPractices = true;
-    else if (typeof obj.max_practices === "number") maxPractices = obj.max_practices;
-  }
-
+  // max_practices removed from the editor: the product is single-practice per
+  // tenant and the limit was never enforced. It stays in MANAGED_KEYS so any
+  // legacy value is dropped (not preserved as an unknown key) on next save.
   let unlimitedUsers = false;
   let maxUsers = 5;
   if ("max_users" in obj) {
@@ -61,7 +57,7 @@ function parseFeatures(featuresJson: Record<string, unknown> | undefined) {
   }
 
   return {
-    unlimitedPractices, maxPractices, unlimitedUsers, maxUsers,
+    unlimitedUsers, maxUsers,
     selectedModules, unknownModules, rbac, prioritySupport, unknownKeys,
   };
 }
@@ -97,8 +93,6 @@ export function PlanWizard({
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
 
   const initialFeatures = parseFeatures(initial?.features_json);
-  const [unlimitedPractices, setUnlimitedPractices] = useState(initialFeatures.unlimitedPractices);
-  const [maxPractices, setMaxPractices] = useState(initialFeatures.maxPractices);
   const [unlimitedUsers, setUnlimitedUsers] = useState(initialFeatures.unlimitedUsers);
   const [maxUsers, setMaxUsers] = useState(initialFeatures.maxUsers);
   const [selectedModules, setSelectedModules] = useState<Set<string>>(initialFeatures.selectedModules);
@@ -146,7 +140,6 @@ export function PlanWizard({
     const managedModules = allModulesSelected ? ["all"] : [...selectedModules, ...unknownModules];
     const featuresJson: Record<string, unknown> = {
       ...unknownKeys,
-      max_practices: unlimitedPractices ? null : Math.max(1, Math.floor(Number(maxPractices) || 1)),
       max_users: unlimitedUsers ? null : Math.max(1, Math.floor(Number(maxUsers) || 1)),
       modules: managedModules,
       ...(rbac ? { rbac: true } : {}),
@@ -212,17 +205,6 @@ export function PlanWizard({
       <div className="space-y-2 rounded-lg border border-slate-200 p-3">
         <span className="block text-sm font-medium">{t("limits")}</span>
         <div className="grid grid-cols-2 gap-3">
-          <label className="text-sm">
-            <span className="mb-1 block text-slate-500">{t("maxPractices")}</span>
-            <input type="number" min="1" disabled={unlimitedPractices}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50"
-              value={maxPractices} onChange={(e) => setMaxPractices(Number(e.target.value))} />
-            <label className="mt-1 flex items-center gap-2 text-slate-500">
-              <input type="checkbox" checked={unlimitedPractices}
-                onChange={(e) => setUnlimitedPractices(e.target.checked)} />
-              {t("unlimited")}
-            </label>
-          </label>
           <label className="text-sm">
             <span className="mb-1 block text-slate-500">{t("maxUsers")}</span>
             <input type="number" min="1" disabled={unlimitedUsers}
