@@ -115,3 +115,21 @@ export async function deletePlan(slug: string): Promise<void> {
 export async function cancelTenantSubscription(tenantId: string): Promise<{ ok: boolean }> {
   return apiFetch(`/api/v1/platform/tenants/${tenantId}/subscription/cancel`, { method: "POST" });
 }
+
+export async function assignTenantNumber(
+  tenantId: string,
+  body: { practice_id?: string; phone_e164: string; provider: "telnyx" | "external"; telephony_number_id?: string },
+): Promise<{ ok: boolean; result: unknown }> {
+  return apiFetch(`/api/v1/platform/tenants/${tenantId}/comms-number`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function clearTenantNumber(
+  tenantId: string,
+  practiceId?: string,
+): Promise<{ ok: boolean; result: unknown }> {
+  const qs = practiceId ? `?practice_id=${encodeURIComponent(practiceId)}` : "";
+  return apiFetch(`/api/v1/platform/tenants/${tenantId}/comms-number${qs}`, { method: "DELETE" });
+}

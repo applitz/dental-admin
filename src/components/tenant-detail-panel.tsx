@@ -2,7 +2,9 @@
 
 import { getTenant, patchTenant, type TenantDetail } from "@/lib/api";
 import {
+  assignTenantNumber,
   cancelTenantSubscription,
+  clearTenantNumber,
   fetchFeatureCatalog,
   impersonateTenant,
   listTenantUsers,
@@ -37,6 +39,8 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
   const [catalog, setCatalog] = useState<FeatureCatalogItem[]>([]);
   const [featureDraft, setFeatureDraft] = useState(detail.features);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [numberInput, setNumberInput] = useState("");
+  const [numberProvider, setNumberProvider] = useState<"external" | "telnyx">("external");
 
   useEffect(() => {
     setFeatureDraft(detail.features);
@@ -83,6 +87,42 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
       void res;
     } catch {
       setActionMsg(t("actionError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function assignNumber(practiceId: string) {
+    const phone = numberInput.trim();
+    if (!phone) return;
+    setBusy(true);
+    setActionMsg(null);
+    try {
+      await assignTenantNumber(detail.id, {
+        practice_id: practiceId,
+        phone_e164: phone,
+        provider: numberProvider,
+      });
+      onUpdated(await getTenant(detail.id));
+      setNumberInput("");
+      setActionMsg(t("comms.assignDone"));
+    } catch {
+      setActionMsg(t("comms.assignError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function clearNumber(practiceId: string) {
+    if (!window.confirm(t("comms.clearConfirm"))) return;
+    setBusy(true);
+    setActionMsg(null);
+    try {
+      await clearTenantNumber(detail.id, practiceId);
+      onUpdated(await getTenant(detail.id));
+      setActionMsg(t("comms.clearDone"));
+    } catch {
+      setActionMsg(t("comms.assignError"));
     } finally {
       setBusy(false);
     }
@@ -266,8 +306,39 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
                       {p.comms_provision_error}
                     </div>
                   )}
+
+                  {/* Manually assign a number (Telnyx-portal or another provider). */}
+                  <div className="mt-3 border-t border-slate-100 pt-3">
+                    <p className="mb-2 text-xs font-medium text-slate-500">{t("comms.assignTitle")}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        value={numberInput}
+                        onChange={(e) => setNumberInput(e.target.value)}
+                        placeholder="+49 30 1234567"
+                        className="h-9 flex-1 rounded-lg border border-slate-300 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                      />
+                      <select
+                        value={numberProvider}
+                        onChange={(e) => setNumberProvider(e.target.value as "external" | "telnyx")}
+                        className="h-9 rounded-lg border border-slate-300 px-2 text-sm"
+                      >
+                        <option value="external">{t("comms.providerExternal")}</option>
+                        <option value="telnyx">Telnyx</option>
+                      </select>
+                      <Button size="sm" disabled={busy || !numberInput.trim()} onClick={() => void assignNumber(p.id)}>
+                        {t("comms.assign")}
+                      </Button>
+                      {p.comms_phone && (
+                        <Button variant="secondary" size="sm" disabled={busy} onClick={() => void clearNumber(p.id)}>
+                          {t("comms.clear")}
+                        </Button>
+                      )}
+                    </div>
+                    <p className="mt-1.5 text-[11px] text-slate-400">{t("comms.assignHint")}</p>
+                  </div>
                 </div>
               ))}
+              {actionMsg && <p className="text-xs text-slate-500">{actionMsg}</p>}
             </div>
           </div>
         </>

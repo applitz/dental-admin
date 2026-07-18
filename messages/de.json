@@ -124,7 +124,16 @@
       "email": "E-Mail",
       "noNumber": "Keine Nummer bereitgestellt",
       "provisionError": "Bereitstellungsfehler",
-      "inReview": "In Prüfung"
+      "inReview": "In Prüfung",
+      "assignTitle": "Nummer manuell zuweisen",
+      "assign": "Zuweisen",
+      "clear": "Entfernen",
+      "providerExternal": "Extern",
+      "assignDone": "Nummer zugewiesen.",
+      "assignError": "Nummer konnte nicht aktualisiert werden.",
+      "clearDone": "Nummer entfernt.",
+      "clearConfirm": "Nummer dieses Mandanten entfernen? Sie kann danach neu bereitgestellt oder neu zugewiesen werden.",
+      "assignHint": "Nummer aus dem Telnyx-Portal oder von einem anderen Anbieter zuweisen (E.164, z. B. +49301234567)."
     }
   },
   "features": {

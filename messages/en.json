@@ -124,7 +124,16 @@
       "email": "Email",
       "noNumber": "No number provisioned",
       "provisionError": "Provisioning error",
-      "inReview": "In review"
+      "inReview": "In review",
+      "assignTitle": "Assign a number manually",
+      "assign": "Assign",
+      "clear": "Clear",
+      "providerExternal": "External",
+      "assignDone": "Number assigned.",
+      "assignError": "Couldn't update the number.",
+      "clearDone": "Number cleared.",
+      "clearConfirm": "Clear this tenant's number? They can be re-provisioned or reassigned afterwards.",
+      "assignHint": "Assign a number bought in the Telnyx portal or from another provider (E.164, e.g. +49301234567)."
     }
   },
   "features": {
