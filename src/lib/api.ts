@@ -138,6 +138,7 @@ export type TenantDetail = TenantSummary & {
     phone: string | null;
     comms_email: string | null;
     comms_phone: string | null;
+    comms_number_status: string;
     comms_provision_error: string | null;
   }[];
   features: { feature_key: string; enabled: boolean; rollout_percent: number }[];

@@ -243,7 +243,20 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
                   <div className="mt-3 grid gap-4 sm:grid-cols-2">
                     <InfoCard
                       label={t("comms.number")}
-                      value={p.comms_phone ?? t("comms.noNumber")}
+                      valueNode={
+                        p.comms_phone ? (
+                          <span className="flex items-center gap-2">
+                            <span>{p.comms_phone}</span>
+                            {p.comms_number_status === "pending_review" && (
+                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                                {t("comms.inReview")}
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-slate-500">{t("comms.noNumber")}</span>
+                        )
+                      }
                     />
                     <InfoCard label={t("comms.email")} value={p.comms_email ?? "—"} />
                   </div>
