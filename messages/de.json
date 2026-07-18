@@ -117,6 +117,13 @@
         "month": "Monatlich",
         "year": "Jährlich"
       }
+    },
+    "comms": {
+      "title": "Kommunikation",
+      "number": "Telefonnummer",
+      "email": "E-Mail",
+      "noNumber": "Keine Nummer bereitgestellt",
+      "provisionError": "Bereitstellungsfehler"
     }
   },
   "features": {

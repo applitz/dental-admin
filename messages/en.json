@@ -117,6 +117,13 @@
         "month": "Monthly",
         "year": "Yearly"
       }
+    },
+    "comms": {
+      "title": "Communications",
+      "number": "Phone number",
+      "email": "Email",
+      "noNumber": "No number provisioned",
+      "provisionError": "Provisioning error"
     }
   },
   "features": {

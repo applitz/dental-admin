@@ -233,6 +233,30 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
               <p className="mt-3 text-sm text-slate-500">{t("subscription.none")}</p>
             )}
           </div>
+
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-slate-700">{t("comms.title")}</h2>
+            <div className="mt-4 space-y-4">
+              {detail.practices.map((p) => (
+                <div key={p.id} className="rounded-lg border border-slate-100 p-3">
+                  <p className="text-sm font-medium text-slate-800">{p.name}</p>
+                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                    <InfoCard
+                      label={t("comms.number")}
+                      value={p.comms_phone ?? t("comms.noNumber")}
+                    />
+                    <InfoCard label={t("comms.email")} value={p.comms_email ?? "—"} />
+                  </div>
+                  {!p.comms_phone && p.comms_provision_error && (
+                    <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      <span className="font-semibold">{t("comms.provisionError")}:</span>{" "}
+                      {p.comms_provision_error}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       )}
 
