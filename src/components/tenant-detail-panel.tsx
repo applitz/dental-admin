@@ -5,6 +5,7 @@ import {
   assignTenantNumber,
   cancelTenantSubscription,
   clearTenantNumber,
+  deleteTenant,
   fetchFeatureCatalog,
   impersonateTenant,
   listTenantUsers,
@@ -25,9 +26,10 @@ type Tab = "overview" | "users" | "patients" | "features" | "actions";
 type Props = {
   detail: TenantDetail;
   onUpdated: (detail: TenantDetail) => void;
+  onDeleted?: () => void;
 };
 
-export function TenantDetailPanel({ detail, onUpdated }: Props) {
+export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   const t = useTranslations("tenants");
   const locale = useLocale();
   const [tab, setTab] = useState<Tab>("overview");
@@ -41,6 +43,7 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [numberInput, setNumberInput] = useState("");
   const [numberProvider, setNumberProvider] = useState<"external" | "telnyx">("external");
+  const [deleteConfirm, setDeleteConfirm] = useState("");
 
   useEffect(() => {
     setFeatureDraft(detail.features);
@@ -123,6 +126,21 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
       setActionMsg(t("comms.clearDone"));
     } catch {
       setActionMsg(t("comms.assignError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteTenantAction() {
+    if (deleteConfirm.trim() !== detail.name) return;
+    if (!window.confirm(t("delete.finalConfirm", { name: detail.name }))) return;
+    setBusy(true);
+    setActionMsg(null);
+    try {
+      await deleteTenant(detail.id, deleteConfirm.trim());
+      onDeleted?.();
+    } catch {
+      setActionMsg(t("delete.error"));
     } finally {
       setBusy(false);
     }
@@ -455,6 +473,30 @@ export function TenantDetailPanel({ detail, onUpdated }: Props) {
             {t("actionImpersonate")}
           </Button>
           {actionMsg && <p className="text-sm text-slate-600">{actionMsg}</p>}
+
+          {/* Danger zone: permanent, irreversible deletion. */}
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
+            <h3 className="text-sm font-semibold text-red-800">{t("delete.title")}</h3>
+            <p className="mt-1 text-xs leading-relaxed text-red-700">{t("delete.warning")}</p>
+            <p className="mt-3 text-xs text-red-700">
+              {t("delete.typeName")}{" "}
+              <span className="font-mono font-semibold">{detail.name}</span>
+            </p>
+            <input
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder={detail.name}
+              className="mt-1.5 w-full rounded-lg border border-red-300 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+            />
+            <button
+              type="button"
+              disabled={busy || deleteConfirm.trim() !== detail.name}
+              onClick={() => void deleteTenantAction()}
+              className="mt-3 w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+            >
+              {t("delete.button")}
+            </button>
+          </div>
         </div>
       )}
     </div>

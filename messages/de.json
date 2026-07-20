@@ -134,6 +134,14 @@
       "clearDone": "Nummer entfernt.",
       "clearConfirm": "Nummer dieses Mandanten entfernen? Sie kann danach neu bereitgestellt oder neu zugewiesen werden.",
       "assignHint": "Nummer aus dem Telnyx-Portal oder von einem anderen Anbieter zuweisen (E.164, z. B. +49301234567)."
+    },
+    "delete": {
+      "title": "Mandant löschen",
+      "warning": "Löscht diesen Mandanten und alles, was ihm gehört, dauerhaft — alle Benutzer, Patienten, klinischen Daten, Dokumente und Bilder, gibt die Telefonnummer frei und die E-Mail-Adresse. Dies kann nicht rückgängig gemacht werden.",
+      "typeName": "Zur Bestätigung den Mandantennamen eingeben:",
+      "button": "Diesen Mandanten dauerhaft löschen",
+      "error": "Mandant konnte nicht gelöscht werden.",
+      "finalConfirm": "\"{name}\" und ALLE Daten dauerhaft löschen? Dies kann nicht rückgängig gemacht werden."
     }
   },
   "features": {

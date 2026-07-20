@@ -210,6 +210,10 @@ function TenantsView({ tenants, onRefresh }: { tenants: TenantSummary[]; onRefre
               setDetail(updated);
               onRefresh();
             }}
+            onDeleted={() => {
+              setSelectedId(null);
+              onRefresh();
+            }}
           />
         )}
       </div>

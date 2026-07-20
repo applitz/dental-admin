@@ -134,6 +134,14 @@
       "clearDone": "Number cleared.",
       "clearConfirm": "Clear this tenant's number? They can be re-provisioned or reassigned afterwards.",
       "assignHint": "Assign a number bought in the Telnyx portal or from another provider (E.164, e.g. +49301234567)."
+    },
+    "delete": {
+      "title": "Delete tenant",
+      "warning": "Permanently deletes this tenant and everything it owns — all users, patients, clinical data, documents and images, releases its phone number, and frees its email. This cannot be undone.",
+      "typeName": "To confirm, type the tenant name:",
+      "button": "Delete this tenant permanently",
+      "error": "Couldn't delete the tenant.",
+      "finalConfirm": "Permanently delete \"{name}\" and ALL its data? This cannot be undone."
     }
   },
   "features": {

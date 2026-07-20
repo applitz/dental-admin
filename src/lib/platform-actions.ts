@@ -126,6 +126,16 @@ export async function assignTenantNumber(
   });
 }
 
+export async function deleteTenant(
+  tenantId: string,
+  confirmName: string,
+): Promise<{ ok: boolean; result: unknown }> {
+  return apiFetch(
+    `/api/v1/platform/tenants/${tenantId}?confirm_name=${encodeURIComponent(confirmName)}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function clearTenantNumber(
   tenantId: string,
   practiceId?: string,
