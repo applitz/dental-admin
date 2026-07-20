@@ -141,7 +141,9 @@
       "typeName": "Zur Bestätigung den Mandantennamen eingeben:",
       "button": "Diesen Mandanten dauerhaft löschen",
       "error": "Mandant konnte nicht gelöscht werden.",
-      "finalConfirm": "\"{name}\" und ALLE Daten dauerhaft löschen? Dies kann nicht rückgängig gemacht werden."
+      "finalConfirm": "\"{name}\" und ALLE Daten dauerhaft löschen? Dies kann nicht rückgängig gemacht werden.",
+      "errorPlatform": "Dies ist der Plattform-Admin-Mandant — er kann nicht gelöscht werden.",
+      "errorMismatch": "Der eingegebene Name stimmt nicht mit dem Mandantennamen überein."
     }
   },
   "features": {

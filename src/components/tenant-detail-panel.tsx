@@ -1,6 +1,6 @@
 "use client";
 
-import { getTenant, patchTenant, type TenantDetail } from "@/lib/api";
+import { ApiError, getTenant, patchTenant, type TenantDetail } from "@/lib/api";
 import {
   assignTenantNumber,
   cancelTenantSubscription,
@@ -139,8 +139,21 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
     try {
       await deleteTenant(detail.id, deleteConfirm.trim());
       onDeleted?.();
-    } catch {
-      setActionMsg(t("delete.error"));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.body.code === "PLATFORM_CANNOT_DELETE_PLATFORM_TENANT") {
+          setActionMsg(t("delete.errorPlatform"));
+        } else if (err.body.code === "PLATFORM_DELETE_CONFIRM_MISMATCH") {
+          setActionMsg(t("delete.errorMismatch"));
+        } else {
+          const detail = err.body.params?.detail;
+          setActionMsg(
+            `${t("delete.error")} (${err.body.code ?? err.body.message_key ?? "error"}${detail ? ": " + detail : ""})`,
+          );
+        }
+      } else {
+        setActionMsg(t("delete.error"));
+      }
     } finally {
       setBusy(false);
     }
