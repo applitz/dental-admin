@@ -80,22 +80,27 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
   );
 
   const [smsSenders, setSmsSenders] = useState(
-    initial?.sms_senders ?? [
-      {
-        purpose: "patient",
-        sender_type: "alphanumeric",
-        sender_id: "",
-        messaging_profile_id: null,
-        is_default: true,
-      },
-      {
-        purpose: "otp",
-        sender_type: "alphanumeric",
-        sender_id: "",
-        messaging_profile_id: null,
-        is_default: true,
-      },
-    ],
+    // Fall back to the default sender slots when a market has none configured —
+    // the API returns `[]` (not null) in that case, so a plain `??` left the
+    // Telnyx SMS step blank with no fields to fill in.
+    initial?.sms_senders && initial.sms_senders.length > 0
+      ? initial.sms_senders
+      : [
+          {
+            purpose: "patient",
+            sender_type: "alphanumeric",
+            sender_id: "",
+            messaging_profile_id: null,
+            is_default: true,
+          },
+          {
+            purpose: "otp",
+            sender_type: "alphanumeric",
+            sender_id: "",
+            messaging_profile_id: null,
+            is_default: true,
+          },
+        ],
   );
 
   const stepIndex = STEPS.indexOf(step);
