@@ -143,3 +143,11 @@ export async function clearTenantNumber(
   const qs = practiceId ? `?practice_id=${encodeURIComponent(practiceId)}` : "";
   return apiFetch(`/api/v1/platform/tenants/${tenantId}/comms-number${qs}`, { method: "DELETE" });
 }
+
+export type UnassignedNumber = { number_id: string; phone_e164: string };
+
+/** Telnyx numbers owned on the account but not assigned to any tenant — the
+ *  pool an admin picks from when assigning a Telnyx number. */
+export async function listUnassignedNumbers(): Promise<UnassignedNumber[]> {
+  return apiFetch(`/api/v1/platform/telnyx/unassigned-numbers`);
+}

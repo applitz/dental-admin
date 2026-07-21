@@ -9,12 +9,14 @@ import {
   fetchFeatureCatalog,
   impersonateTenant,
   listTenantUsers,
+  listUnassignedNumbers,
   patchTenantFeatures,
   runTenantAction,
   searchTenantPatients,
   type FeatureCatalogItem,
   type TenantPatient,
   type TenantUser,
+  type UnassignedNumber,
 } from "@/lib/platform-actions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -43,7 +45,21 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [numberInput, setNumberInput] = useState("");
   const [numberProvider, setNumberProvider] = useState<"external" | "telnyx">("external");
+  const [unassigned, setUnassigned] = useState<UnassignedNumber[]>([]);
+  const [unassignedLoading, setUnassignedLoading] = useState(false);
+  const [selectedNumberId, setSelectedNumberId] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState("");
+
+  async function loadUnassigned() {
+    setUnassignedLoading(true);
+    try {
+      setUnassigned(await listUnassignedNumbers());
+    } catch {
+      setUnassigned([]);
+    } finally {
+      setUnassignedLoading(false);
+    }
+  }
 
   useEffect(() => {
     setFeatureDraft(detail.features);
@@ -96,8 +112,18 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   }
 
   async function assignNumber(practiceId: string) {
-    const phone = numberInput.trim();
-    if (!phone) return;
+    // Telnyx: pick from the unassigned pool (dropdown). External: type the number.
+    let phone: string;
+    let telephonyNumberId: string | undefined;
+    if (numberProvider === "telnyx") {
+      const picked = unassigned.find((n) => n.number_id === selectedNumberId);
+      if (!picked) return;
+      phone = picked.phone_e164;
+      telephonyNumberId = picked.number_id;
+    } else {
+      phone = numberInput.trim();
+      if (!phone) return;
+    }
     setBusy(true);
     setActionMsg(null);
     try {
@@ -105,9 +131,12 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
         practice_id: practiceId,
         phone_e164: phone,
         provider: numberProvider,
+        telephony_number_id: telephonyNumberId,
       });
       onUpdated(await getTenant(detail.id));
       setNumberInput("");
+      setSelectedNumberId("");
+      void loadUnassigned();
       setActionMsg(t("comms.assignDone"));
     } catch {
       setActionMsg(t("comms.assignError"));
@@ -123,6 +152,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
     try {
       await clearTenantNumber(detail.id, practiceId);
       onUpdated(await getTenant(detail.id));
+      if (numberProvider === "telnyx") void loadUnassigned();
       setActionMsg(t("comms.clearDone"));
     } catch {
       setActionMsg(t("comms.assignError"));
@@ -342,26 +372,59 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                   <div className="mt-3 border-t border-slate-100 pt-3">
                     <p className="mb-2 text-xs font-medium text-slate-500">{t("comms.assignTitle")}</p>
                     <div className="flex flex-wrap items-center gap-2">
-                      <input
-                        value={numberInput}
-                        onChange={(e) => setNumberInput(e.target.value)}
-                        placeholder="+49 30 1234567"
-                        className="h-9 flex-1 rounded-lg border border-slate-300 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-                      />
+                      {numberProvider === "telnyx" ? (
+                        <select
+                          value={selectedNumberId}
+                          onChange={(e) => setSelectedNumberId(e.target.value)}
+                          disabled={unassignedLoading}
+                          className="h-9 flex-1 rounded-lg border border-slate-300 px-2 text-sm"
+                        >
+                          <option value="">
+                            {unassignedLoading
+                              ? t("comms.loadingNumbers")
+                              : unassigned.length === 0
+                                ? t("comms.noUnassigned")
+                                : t("comms.pickNumber")}
+                          </option>
+                          {unassigned.map((n) => (
+                            <option key={n.number_id} value={n.number_id}>
+                              {n.phone_e164}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          value={numberInput}
+                          onChange={(e) => setNumberInput(e.target.value)}
+                          placeholder="+49 30 1234567"
+                          className="h-9 flex-1 rounded-lg border border-slate-300 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                        />
+                      )}
                       <select
                         value={numberProvider}
-                        onChange={(e) => setNumberProvider(e.target.value as "external" | "telnyx")}
+                        onChange={(e) => {
+                          const next = e.target.value as "external" | "telnyx";
+                          setNumberProvider(next);
+                          if (next === "telnyx") void loadUnassigned();
+                        }}
                         className="h-9 rounded-lg border border-slate-300 px-2 text-sm"
                       >
                         <option value="external">{t("comms.providerExternal")}</option>
                         <option value="telnyx">Telnyx</option>
                       </select>
-                      <Button size="sm" disabled={busy || !numberInput.trim()} onClick={() => void assignNumber(p.id)}>
+                      <Button
+                        size="sm"
+                        disabled={
+                          busy ||
+                          (numberProvider === "telnyx" ? !selectedNumberId : !numberInput.trim())
+                        }
+                        onClick={() => void assignNumber(p.id)}
+                      >
                         {t("comms.assign")}
                       </Button>
                       {p.comms_phone && (
                         <Button variant="secondary" size="sm" disabled={busy} onClick={() => void clearNumber(p.id)}>
-                          {t("comms.clear")}
+                          {t("comms.unassign")}
                         </Button>
                       )}
                     </div>
