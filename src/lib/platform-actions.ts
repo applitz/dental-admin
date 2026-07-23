@@ -158,7 +158,7 @@ export async function recreateVoiceAgent(
  *  `voice_agent_template_id` so new clinics clone it. */
 export async function createVoiceAgentTemplate(
   assistantId?: string,
-): Promise<{ assistant_id: string }> {
+): Promise<{ assistant_id: string; action?: "created" | "updated" }> {
   return apiFetch(`/api/v1/platform/voice-agent/template`, {
     method: "POST",
     body: JSON.stringify(assistantId ? { assistant_id: assistantId } : {}),

@@ -184,6 +184,8 @@
     "voiceTemplateCreate": "Vorlage erstellen / aktualisieren",
     "voiceTemplateBusy": "Wird erstellt…",
     "voiceTemplateDone": "Vorlage bereit — Assistent-ID:",
+    "voiceTemplateCreated": "Neue Master-Vorlage erstellt („Vodett AI Receptionist“).",
+    "voiceTemplateUpdated": "Die aktuelle Konfiguration wurde auf die vorhandene Master-Vorlage angewendet (gleiche ID — das ist so gewollt, es gibt nur eine Master-Vorlage).",
     "voiceTemplateSetEnv": "Als voice_agent_template_id in der API-Umgebung setzen und neu deployen, damit sie geklont wird.",
     "voiceTemplateError": "Vorlage konnte nicht erstellt werden (ist Telnyx in der API konfiguriert?).",
     "gateEnvTitle": "Admin-Zugangsschlüssel",

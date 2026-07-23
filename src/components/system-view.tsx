@@ -23,6 +23,7 @@ export function SystemView() {
   const [gate, setGate] = useState<GateConfig | null>(null);
   const [tmplBusy, setTmplBusy] = useState(false);
   const [tmplId, setTmplId] = useState<string | null>(null);
+  const [tmplAction, setTmplAction] = useState<"created" | "updated" | null>(null);
   const [tmplErr, setTmplErr] = useState<string | null>(null);
 
   async function createTemplate() {
@@ -31,6 +32,7 @@ export function SystemView() {
     try {
       const res = await createVoiceAgentTemplate();
       setTmplId(res.assistant_id);
+      setTmplAction(res.action ?? "updated");
     } catch {
       setTmplErr(t("voiceTemplateError"));
     } finally {
@@ -92,6 +94,11 @@ export function SystemView() {
         {tmplId && (
           <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
             <p className="text-xs font-medium text-emerald-800">{t("voiceTemplateDone")}</p>
+            <p className="mt-1 text-xs text-emerald-700">
+              {tmplAction === "created"
+                ? t("voiceTemplateCreated")
+                : t("voiceTemplateUpdated")}
+            </p>
             <code className="mt-1 block break-all font-mono text-sm text-slate-900">{tmplId}</code>
             <p className="mt-2 text-xs text-slate-500">{t("voiceTemplateSetEnv")}</p>
           </div>

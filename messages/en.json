@@ -184,6 +184,8 @@
     "voiceTemplateCreate": "Create / update template",
     "voiceTemplateBusy": "Creating…",
     "voiceTemplateDone": "Template ready — assistant id:",
+    "voiceTemplateCreated": "Created a new master template (‘Vodett AI Receptionist’).",
+    "voiceTemplateUpdated": "Re-applied the latest spec to your existing master template (same id — this is expected, there is only one master).",
     "voiceTemplateSetEnv": "Set this as voice_agent_template_id in the API env, then redeploy, so provisioning clones it.",
     "voiceTemplateError": "Couldn't create the template (is Telnyx configured on the API?).",
     "gateEnvTitle": "Admin access key",
