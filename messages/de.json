@@ -137,7 +137,13 @@
       "assignError": "Nummer konnte nicht aktualisiert werden.",
       "clearDone": "Zuweisung aufgehoben — die Nummer ist jetzt wieder verfügbar.",
       "clearConfirm": "Zuweisung der Nummer dieses Mandanten aufheben? Die Nummer bleibt erhalten (wird nicht freigegeben) und kehrt in den Pool nicht zugewiesener Nummern zurück.",
-      "assignHint": "Für Telnyx aus dem Pool nicht zugewiesener Nummern auswählen. Für einen anderen Anbieter (z. B. eine externe Nummer) „Extern“ wählen und im E.164-Format eingeben (z. B. +49301234567)."
+      "assignHint": "Für Telnyx aus dem Pool nicht zugewiesener Nummern auswählen. Für einen anderen Anbieter (z. B. eine externe Nummer) „Extern“ wählen und im E.164-Format eingeben (z. B. +49301234567).",
+      "recreateTitle": "KI-Sprachassistent",
+      "recreateHint": "Aktuellen Assistenten löschen und einen neuen Klon von vodett-original erstellen, neu mit der Nummer verknüpft.",
+      "recreate": "Assistent neu erstellen",
+      "recreateConfirm": "KI-Sprachassistenten dieses Mandanten neu erstellen? Der aktuelle Telnyx-Assistent wird gelöscht und ein neuer Klon von vodett-original erstellt und mit der Nummer verknüpft.",
+      "recreateDone": "Sprachassistent neu erstellt (Status: {status}).",
+      "recreateError": "Sprachassistent konnte nicht neu erstellt werden."
     },
     "delete": {
       "title": "Mandant löschen",

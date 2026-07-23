@@ -3,6 +3,7 @@
 import { ApiError, getTenant, patchTenant, type TenantDetail } from "@/lib/api";
 import {
   assignTenantNumber,
+  recreateVoiceAgent,
   cancelTenantSubscription,
   clearTenantNumber,
   deleteTenant,
@@ -156,6 +157,20 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
       setActionMsg(t("comms.clearDone"));
     } catch {
       setActionMsg(t("comms.assignError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function recreateAgent() {
+    if (!window.confirm(t("comms.recreateConfirm"))) return;
+    setBusy(true);
+    setActionMsg(null);
+    try {
+      const res = await recreateVoiceAgent(detail.id);
+      setActionMsg(t("comms.recreateDone", { status: res.result?.status ?? "off" }));
+    } catch {
+      setActionMsg(t("comms.recreateError"));
     } finally {
       setBusy(false);
     }
@@ -429,6 +444,20 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                       )}
                     </div>
                     <p className="mt-1.5 text-[11px] text-slate-400">{t("comms.assignHint")}</p>
+
+                    {/* Recreate the AI voice agent: delete the old assistant + clone
+                        a fresh one from vodett-original, re-linked to the number. */}
+                    <div className="mt-3 border-t border-slate-100 pt-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-medium text-slate-500">{t("comms.recreateTitle")}</p>
+                          <p className="mt-0.5 text-[11px] text-slate-400">{t("comms.recreateHint")}</p>
+                        </div>
+                        <Button variant="secondary" size="sm" disabled={busy} onClick={() => void recreateAgent()}>
+                          {t("comms.recreate")}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -137,7 +137,13 @@
       "assignError": "Couldn't update the number.",
       "clearDone": "Number unassigned — it's now available to reassign.",
       "clearConfirm": "Unassign this tenant's number? The number is kept (not released) and returns to the unassigned pool for reuse.",
-      "assignHint": "For Telnyx, pick from the unassigned pool. For another provider (e.g. an external number), choose External and type it in E.164 (e.g. +49301234567)."
+      "assignHint": "For Telnyx, pick from the unassigned pool. For another provider (e.g. an external number), choose External and type it in E.164 (e.g. +49301234567).",
+      "recreateTitle": "AI voice agent",
+      "recreateHint": "Delete the current assistant and clone a fresh one from vodett-original, re-linked to the number.",
+      "recreate": "Recreate agent",
+      "recreateConfirm": "Recreate this tenant's AI voice agent? The current Telnyx assistant is deleted and a fresh clone of vodett-original is created and linked to the number.",
+      "recreateDone": "Voice agent recreated (status: {status}).",
+      "recreateError": "Couldn't recreate the voice agent."
     },
     "delete": {
       "title": "Delete tenant",

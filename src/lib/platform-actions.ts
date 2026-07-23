@@ -144,6 +144,15 @@ export async function clearTenantNumber(
   return apiFetch(`/api/v1/platform/tenants/${tenantId}/comms-number${qs}`, { method: "DELETE" });
 }
 
+/** Recreate a tenant's AI voice calling agent: delete the current Telnyx
+ *  assistant and clone a fresh one from the `vodett-original` template, re-linked
+ *  to the assigned number. Use after the template is updated. */
+export async function recreateVoiceAgent(
+  tenantId: string,
+): Promise<{ ok: boolean; result: { status: string; last_error: string | null; assistant_id: string | null } }> {
+  return apiFetch(`/api/v1/platform/tenants/${tenantId}/voice-agent/recreate`, { method: "POST" });
+}
+
 export type UnassignedNumber = { number_id: string; phone_e164: string };
 
 /** Telnyx numbers owned on the account but not assigned to any tenant — the
