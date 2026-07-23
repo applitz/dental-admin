@@ -1,6 +1,7 @@
 "use client";
 
-import { fetchGateConfig, fetchSystemHealth, type GateConfig, type SystemHealth } from "@/lib/platform-actions";
+import { createVoiceAgentTemplate, fetchGateConfig, fetchSystemHealth, type GateConfig, type SystemHealth } from "@/lib/platform-actions";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -20,6 +21,22 @@ export function SystemView() {
   const t = useTranslations("system");
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [gate, setGate] = useState<GateConfig | null>(null);
+  const [tmplBusy, setTmplBusy] = useState(false);
+  const [tmplId, setTmplId] = useState<string | null>(null);
+  const [tmplErr, setTmplErr] = useState<string | null>(null);
+
+  async function createTemplate() {
+    setTmplBusy(true);
+    setTmplErr(null);
+    try {
+      const res = await createVoiceAgentTemplate();
+      setTmplId(res.assistant_id);
+    } catch {
+      setTmplErr(t("voiceTemplateError"));
+    } finally {
+      setTmplBusy(false);
+    }
+  }
 
   const reload = useCallback(() => {
     void fetchSystemHealth().then(setHealth).catch(() => setHealth(null));
@@ -65,6 +82,22 @@ export function SystemView() {
           </div>
         </div>
       )}
+
+      <div className="mt-8 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">{t("voiceTemplateTitle")}</h2>
+        <p className="mt-1 text-sm text-slate-500">{t("voiceTemplateHint")}</p>
+        <Button className="mt-4" size="sm" disabled={tmplBusy} onClick={() => void createTemplate()}>
+          {tmplBusy ? t("voiceTemplateBusy") : t("voiceTemplateCreate")}
+        </Button>
+        {tmplId && (
+          <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+            <p className="text-xs font-medium text-emerald-800">{t("voiceTemplateDone")}</p>
+            <code className="mt-1 block break-all font-mono text-sm text-slate-900">{tmplId}</code>
+            <p className="mt-2 text-xs text-slate-500">{t("voiceTemplateSetEnv")}</p>
+          </div>
+        )}
+        {tmplErr && <p className="mt-3 text-sm text-rose-600">{tmplErr}</p>}
+      </div>
 
       <div className="mt-8 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">{t("gateEnvTitle")}</h2>

@@ -179,6 +179,13 @@
     "configured": "Configured",
     "missing": "Not configured",
     "gateSource": "Source: {source}",
+    "voiceTemplateTitle": "AI voice template (vodett-original)",
+    "voiceTemplateHint": "Create the master AI receptionist assistant on Telnyx. New clinics clone it; you then tune its voice/instructions/knowledge base in the Telnyx portal. Requires Telnyx to be configured on the API.",
+    "voiceTemplateCreate": "Create / update template",
+    "voiceTemplateBusy": "Creating…",
+    "voiceTemplateDone": "Template ready — assistant id:",
+    "voiceTemplateSetEnv": "Set this as voice_agent_template_id in the API env, then redeploy, so provisioning clones it.",
+    "voiceTemplateError": "Couldn't create the template (is Telnyx configured on the API?).",
     "gateEnvTitle": "Admin access key",
     "gateEnvHint": "Configured via PLATFORM_ADMIN_GATE_SECRET on the API server. Update the environment variable and restart the API to change it — nothing is stored in the database for the admin console.",
     "currentSource": "Active source: {source}"

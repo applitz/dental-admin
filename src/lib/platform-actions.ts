@@ -153,6 +153,18 @@ export async function recreateVoiceAgent(
   return apiFetch(`/api/v1/platform/tenants/${tenantId}/voice-agent/recreate`, { method: "POST" });
 }
 
+/** Create (or re-apply, if assistantId given) the master AI voice template
+ *  `vodett-original`. Returns its assistant id — set that as the API's
+ *  `voice_agent_template_id` so new clinics clone it. */
+export async function createVoiceAgentTemplate(
+  assistantId?: string,
+): Promise<{ assistant_id: string }> {
+  return apiFetch(`/api/v1/platform/voice-agent/template`, {
+    method: "POST",
+    body: JSON.stringify(assistantId ? { assistant_id: assistantId } : {}),
+  });
+}
+
 export type UnassignedNumber = { number_id: string; phone_e164: string };
 
 /** Telnyx numbers owned on the account but not assigned to any tenant — the

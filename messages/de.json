@@ -179,6 +179,13 @@
     "configured": "Konfiguriert",
     "missing": "Nicht konfiguriert",
     "gateSource": "Quelle: {source}",
+    "voiceTemplateTitle": "KI-Sprachvorlage (vodett-original)",
+    "voiceTemplateHint": "Erstellt den Master-KI-Rezeptionsassistenten auf Telnyx. Neue Kliniken klonen ihn; Stimme/Anweisungen/Wissensdatenbank werden anschließend im Telnyx-Portal angepasst. Erfordert eine konfigurierte Telnyx-Anbindung in der API.",
+    "voiceTemplateCreate": "Vorlage erstellen / aktualisieren",
+    "voiceTemplateBusy": "Wird erstellt…",
+    "voiceTemplateDone": "Vorlage bereit — Assistent-ID:",
+    "voiceTemplateSetEnv": "Als voice_agent_template_id in der API-Umgebung setzen und neu deployen, damit sie geklont wird.",
+    "voiceTemplateError": "Vorlage konnte nicht erstellt werden (ist Telnyx in der API konfiguriert?).",
     "gateEnvTitle": "Admin-Zugangsschlüssel",
     "gateEnvHint": "Über PLATFORM_ADMIN_GATE_SECRET auf dem API-Server konfiguriert. Umgebungsvariable ändern und API neu starten — nichts wird für die Admin-Konsole in der Datenbank gespeichert.",
     "currentSource": "Aktive Quelle: {source}"
