@@ -1,6 +1,7 @@
 "use client";
 
 import { ApiError, getTenant, patchTenant, type TenantDetail } from "@/lib/api";
+import { TenantMobileNumber } from "@/components/tenant-mobile-number";
 import {
   assignTenantNumber,
   recreateVoiceAgent,
@@ -392,6 +393,9 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                       {p.comms_provision_error}
                     </div>
                   )}
+
+                  {/* Regulated-market (Austria) number setup: status, docs, resubmit. */}
+                  <TenantMobileNumber tenantId={detail.id} />
 
                   {/* Manually assign a number (Telnyx-portal or another provider). */}
                   <div className="mt-3 border-t border-slate-100 pt-3">

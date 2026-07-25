@@ -1,4 +1,62 @@
 import { apiFetch, type TenantDetail } from "./api";
+import { getAccessToken, getGateToken } from "./auth";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+export type TenantRegulatory = {
+  practice_id: string;
+  required: boolean;
+  status: "not_required" | "not_started" | "under_review" | "active" | "declined";
+  decline_reason: string | null;
+  number: string | null;
+  area_code: string | null;
+  contact_name: string | null;
+  contact_business: string | null;
+  contact_phone: string | null;
+  address: Record<string, string> | null;
+  copy_text: string;
+  documents: {
+    requirement_id: string;
+    filename: string;
+    content_type: string;
+    telnyx_document_id: string | null;
+  }[];
+};
+
+export function getTenantRegulatory(tenantId: string): Promise<TenantRegulatory> {
+  return apiFetch(`/api/v1/platform/tenants/${tenantId}/regulatory`);
+}
+
+export function resubmitTenantRegulatory(tenantId: string): Promise<TenantRegulatory> {
+  return apiFetch(`/api/v1/platform/tenants/${tenantId}/regulatory/resubmit`, { method: "POST" });
+}
+
+/** Fetch a stored regulatory document (with auth) and trigger a browser download. */
+export async function downloadTenantRegulatoryDoc(
+  tenantId: string,
+  requirementId: string,
+  filename: string,
+): Promise<void> {
+  const headers = new Headers();
+  const access = getAccessToken();
+  if (access) headers.set("Authorization", `Bearer ${access}`);
+  const gate = getGateToken();
+  if (gate) headers.set("X-Platform-Gate", gate);
+  const res = await fetch(
+    `${API_URL}/api/v1/platform/tenants/${tenantId}/regulatory/document/${requirementId}`,
+    { headers },
+  );
+  if (!res.ok) throw new Error("download failed");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 export type SystemHealth = {
   status: string;
