@@ -103,8 +103,18 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
     setActionMsg(null);
     try {
       const res = await runTenantAction(detail.id, action);
-      setActionMsg(t(action === "reseed" ? "actionReseedDone" : "actionCommsDone"));
-      void res;
+      if (action === "reprovision_comms") {
+        // Surface a per-practice provisioning error (e.g. a regulated market
+        // that needs documents before a number can be issued) instead of a
+        // false "done", and refresh so the panel shows the persisted reason.
+        const practices =
+          (res.result?.practices as Array<{ error?: string | null }> | undefined) ?? [];
+        const firstErr = practices.find((p) => p.error)?.error;
+        onUpdated(await getTenant(detail.id));
+        setActionMsg(firstErr ?? t("actionCommsDone"));
+      } else {
+        setActionMsg(t("actionReseedDone"));
+      }
     } catch {
       setActionMsg(t("actionError"));
     } finally {
