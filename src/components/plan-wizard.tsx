@@ -116,8 +116,14 @@ export function PlanWizard({
       cancelled = true;
     };
   }, []);
+  const portalCapabilities = capabilityCatalog.filter((c) => c.group === "portal");
   const commsCapabilities = capabilityCatalog.filter((c) => c.group === "comms");
   const aiCapabilities = capabilityCatalog.filter((c) => c.group === "ai");
+  // Anything in a group we don't explicitly render below, so a new catalog
+  // group can never silently disappear from the editor.
+  const otherCapabilities = capabilityCatalog.filter(
+    (c) => !["portal", "comms", "ai"].includes(c.group),
+  );
 
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [name, setName] = useState(initial?.name ?? "");
@@ -342,6 +348,15 @@ export function PlanWizard({
           <span className="block text-xs text-slate-500">{t("capabilitiesHelper")}</span>
         </div>
 
+        {portalCapabilities.length > 0 && (
+          <div className="space-y-2">
+            <span className="block text-xs font-medium uppercase text-slate-500">{t("capabilitiesPortal")}</span>
+            <div className="space-y-1.5">
+              {portalCapabilities.map(renderCapabilityRow)}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2">
           <span className="block text-xs font-medium uppercase text-slate-500">{t("capabilitiesComms")}</span>
           <div className="space-y-1.5">
@@ -355,6 +370,12 @@ export function PlanWizard({
             {aiCapabilities.map(renderCapabilityRow)}
           </div>
         </div>
+
+        {otherCapabilities.length > 0 && (
+          <div className="space-y-2">
+            <div className="space-y-1.5">{otherCapabilities.map(renderCapabilityRow)}</div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-2 rounded-lg border border-slate-200 p-3">

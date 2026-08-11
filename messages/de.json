@@ -427,6 +427,7 @@
       "inventory": "Inventar",
       "lab": "Labor",
       "telemed": "Telemedizin"
-    }
+    },
+    "capabilitiesPortal": "Patientenportal"
   }
 }

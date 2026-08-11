@@ -247,6 +247,8 @@ export type CapabilityCatalogItem = {
   name: string;
   description: string;
   cost_label: string;
-  group: "comms" | "ai";
+  // Catalog-defined group (e.g. "portal", "comms", "ai"); kept open so a new
+  // backend group renders without a type change.
+  group: string;
   available: boolean;
 };
