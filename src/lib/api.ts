@@ -227,6 +227,7 @@ export type PlatformMarketDetail = PlatformMarketSummary & {
   holiday_subdivision: string | null;
   holidays_excluded: string[];
   default_tax_rate: string | null;
+  default_tax_rows: { name: string; kind: "percent" | "fixed"; value: string }[];
 };
 
 export type MarketPackHoliday = { key: string; name: string; date: string };

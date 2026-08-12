@@ -13,8 +13,10 @@ import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
-const STEPS = ["country", "channels", "holidays", "sms"] as const;
+const STEPS = ["country", "channels", "tax", "holidays", "sms"] as const;
 type Step = (typeof STEPS)[number];
+
+type TaxRow = { name: string; kind: "percent" | "fixed"; value: string };
 
 type NumberStrategy = PlatformMarketDetail["number_strategy"];
 type SmsDirection = PlatformMarketDetail["sms_direction"];
@@ -72,8 +74,25 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
   const [smsAutoReset, setSmsAutoReset] = useState(false);
   const [emailDirection, setEmailDirection] = useState<EmailDirection>(initial?.email_direction ?? "both");
   const [voiceEnabled, setVoiceEnabled] = useState(initial?.voice_agent_enabled ?? false);
-  const [taxRate, setTaxRate] = useState(initial?.default_tax_rate ?? "");
+  const [taxRows, setTaxRows] = useState<TaxRow[]>(
+    () =>
+      (initial?.default_tax_rows ?? []).map((r) => ({
+        name: r.name,
+        kind: r.kind === "fixed" ? "fixed" : "percent",
+        value: String(r.value),
+      })),
+  );
   const [isActive, setIsActive] = useState(initial?.is_active ?? true);
+
+  const updateTaxRow = (i: number, patch: Partial<TaxRow>) =>
+    setTaxRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const addTaxRow = () =>
+    setTaxRows((prev) => [...prev, { name: "", kind: "percent", value: "0" }]);
+  const removeTaxRow = (i: number) => setTaxRows((prev) => prev.filter((_, idx) => idx !== i));
+  const cleanTaxRows = () =>
+    taxRows
+      .filter((r) => r.name.trim())
+      .map((r) => ({ name: r.name.trim(), kind: r.kind, value: r.value || "0" }));
 
   const [excludedHolidays, setExcludedHolidays] = useState<Set<string>>(
     () => new Set(initial?.holidays_excluded ?? []),
@@ -236,7 +255,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
       };
       if (dialCode.trim()) body.default_dial_code = dialCode.trim();
       if (compliance.trim()) body.compliance_notes = compliance.trim();
-      if (taxRate.trim()) body.default_tax_rate = taxRate.trim();
+      body.default_tax_rows = cleanTaxRows();
       return body;
     }
 
@@ -271,16 +290,9 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
       body.compliance_notes = null;
     }
 
-    const trimmedTax = taxRate.trim();
-    const initialTax = initial.default_tax_rate ?? "";
-    if (trimmedTax) {
-      // Compare numerically so "19.5" vs "19.50" isn't treated as a change.
-      if (initialTax === "" || parseFloat(trimmedTax) !== parseFloat(initialTax)) {
-        body.default_tax_rate = trimmedTax;
-      }
-    } else if (initialTax) {
-      body.default_tax_rate = null;
-    }
+    // Tax rows are a whole-collection replacement (like locales/holidays):
+    // send the full list whenever the tax step was shown.
+    if (visited.has("tax")) body.default_tax_rows = cleanTaxRows();
 
     if (numberStrategy !== initial.number_strategy) body.number_strategy = numberStrategy;
     if (smsDirection !== initial.sms_direction) body.sms_direction = smsDirection;
@@ -540,18 +552,6 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
               </p>
             </div>
 
-            <Field label={t("fields.taxRate")}>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                step="0.01"
-                className="w-32 rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                value={taxRate}
-                onChange={(e) => setTaxRate(e.target.value)}
-              />
-            </Field>
-
             <div>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
@@ -559,6 +559,63 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
               </label>
               <p className="ml-6 text-xs text-slate-400">{t("wizard.launchActiveHelper")}</p>
             </div>
+          </div>
+        )}
+
+        {step === "tax" && (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500">{t("wizard.taxNote")}</p>
+            {taxRows.length === 0 ? (
+              <p className="text-sm text-slate-400">{t("wizard.taxEmpty")}</p>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-1 text-xs font-medium text-slate-500">
+                  <span className="flex-1">{t("wizard.taxName")}</span>
+                  <span className="w-32">{t("wizard.taxKind")}</span>
+                  <span className="w-28 text-right">{t("wizard.taxValue")}</span>
+                  <span className="w-8" />
+                </div>
+                {taxRows.map((row, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      placeholder={t("wizard.taxNamePlaceholder")}
+                      value={row.name}
+                      onChange={(e) => updateTaxRow(i, { name: e.target.value })}
+                    />
+                    <select
+                      className="w-32 rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                      value={row.kind}
+                      onChange={(e) =>
+                        updateTaxRow(i, { kind: e.target.value as TaxRow["kind"] })
+                      }
+                    >
+                      <option value="percent">{t("wizard.taxPercent")}</option>
+                      <option value="fixed">{t("wizard.taxFixed")}</option>
+                    </select>
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      className="w-28 rounded-lg border border-slate-200 px-3 py-2 text-right text-sm"
+                      value={row.value}
+                      onChange={(e) => updateTaxRow(i, { value: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      className="w-8 text-slate-400 hover:text-red-600"
+                      onClick={() => removeTaxRow(i)}
+                      aria-label={t("wizard.taxRemove")}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Button variant="secondary" size="sm" onClick={addTaxRow}>
+              {t("wizard.taxAdd")}
+            </Button>
           </div>
         )}
 
