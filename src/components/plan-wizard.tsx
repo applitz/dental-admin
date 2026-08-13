@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   createPlan, updatePlan, getModuleCatalog, getCapabilityCatalog,
@@ -10,9 +10,14 @@ import {
 const CURRENCIES = ["EUR", "USD", "GBP", "CHF"];
 const INTERVALS: PlanPrice["interval"][] = ["month", "year"];
 
+// Mirror of the API module_catalog. parseFeatures runs synchronously before the
+// live catalog fetch resolves, so it needs a local list to classify stored
+// modules for the first render. Once the catalog loads, a reconcile effect
+// re-classifies against the real keys — so a module missing here (drift) is
+// self-healing and no longer silently unchecks itself in the editor.
 const MODULE_KEYS_FALLBACK = [
   "calendar", "patients", "clinical", "prescriptions", "documents",
-  "billing", "payments", "insurance", "comms", "analytics",
+  "billing", "payments", "insurance", "comms", "analytics", "timeline",
 ];
 
 // Kept for parseFeatures, which runs synchronously before the catalog fetch resolves.
@@ -52,13 +57,17 @@ function parseFeatures(featuresJson: Record<string, unknown> | undefined) {
 
   const selectedModules = new Set<string>();
   const unknownModules: string[] = [];
+  const rawModules: string[] = [];
+  let allModules = false;
   const modulesVal = obj.modules;
   if (Array.isArray(modulesVal)) {
     if (modulesVal.includes("all")) {
+      allModules = true;
       MODULES.forEach((m) => selectedModules.add(m));
     } else {
       for (const m of modulesVal) {
         if (typeof m !== "string") continue;
+        rawModules.push(m);
         if (MODULES.includes(m)) selectedModules.add(m);
         else unknownModules.push(m);
       }
@@ -75,7 +84,8 @@ function parseFeatures(featuresJson: Record<string, unknown> | undefined) {
 
   return {
     unlimitedUsers, maxUsers, unlimitedPatients, maxPatients,
-    selectedModules, unknownModules, selectedCapabilities, rbac, prioritySupport, unknownKeys,
+    selectedModules, unknownModules, rawModules, allModules,
+    selectedCapabilities, rbac, prioritySupport, unknownKeys,
   };
 }
 
@@ -138,7 +148,29 @@ export function PlanWizard({
   const [unlimitedPatients, setUnlimitedPatients] = useState(initialFeatures.unlimitedPatients);
   const [maxPatients, setMaxPatients] = useState(initialFeatures.maxPatients);
   const [selectedModules, setSelectedModules] = useState<Set<string>>(initialFeatures.selectedModules);
-  const [unknownModules] = useState<string[]>(initialFeatures.unknownModules);
+  const [unknownModules, setUnknownModules] = useState<string[]>(initialFeatures.unknownModules);
+
+  // Once the live module catalog loads, re-classify the plan's stored modules
+  // against the real keys (not the local fallback). This self-heals fallback
+  // drift: a module the fallback didn't know about (e.g. "timeline") would
+  // otherwise be parked in unknownModules and render UNCHECKED even though it's
+  // enabled. Runs once, before the user can interact.
+  const reconciledRef = useRef(false);
+  useEffect(() => {
+    if (moduleCatalog.length === 0 || reconciledRef.current) return;
+    reconciledRef.current = true;
+    const realKeys = moduleCatalog.map((m) => m.key);
+    if (initialFeatures.allModules) {
+      setSelectedModules(new Set(realKeys));
+      setUnknownModules([]);
+      return;
+    }
+    const known = new Set(realKeys);
+    setSelectedModules(new Set(initialFeatures.rawModules.filter((m) => known.has(m))));
+    setUnknownModules(initialFeatures.rawModules.filter((m) => !known.has(m)));
+    // initialFeatures is derived from the (immutable) initial prop; catalog load is the trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moduleCatalog]);
   const [selectedCapabilities, setSelectedCapabilities] = useState<Set<string>>(
     initialFeatures.selectedCapabilities,
   );
