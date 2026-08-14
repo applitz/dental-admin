@@ -170,6 +170,16 @@ export async function deletePlan(slug: string): Promise<void> {
   await apiFetch(`/api/v1/platform/plans/${slug}`, { method: "DELETE" });
 }
 
+export async function assignTenantSubscription(
+  tenantId: string,
+  body: { plan_slug: string; valid_until: string | null },
+): Promise<TenantDetail> {
+  return apiFetch(`/api/v1/platform/tenants/${tenantId}/subscription`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
 export async function cancelTenantSubscription(tenantId: string): Promise<{ ok: boolean }> {
   return apiFetch(`/api/v1/platform/tenants/${tenantId}/subscription/cancel`, { method: "POST" });
 }

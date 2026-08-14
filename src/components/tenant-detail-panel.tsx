@@ -2,8 +2,10 @@
 
 import { ApiError, getTenant, patchTenant, type TenantDetail } from "@/lib/api";
 import { TenantMobileNumber } from "@/components/tenant-mobile-number";
+import { listPlans, type Plan } from "@/lib/platform-api";
 import {
   assignTenantNumber,
+  assignTenantSubscription,
   recreateVoiceAgent,
   cancelTenantSubscription,
   clearTenantNumber,
@@ -51,6 +53,33 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   const [unassignedLoading, setUnassignedLoading] = useState(false);
   const [selectedNumberId, setSelectedNumberId] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [assignSlug, setAssignSlug] = useState(detail.subscription?.plan_slug ?? "");
+  const [assignUntil, setAssignUntil] = useState("");
+  const [assigning, setAssigning] = useState(false);
+
+  useEffect(() => {
+    void listPlans()
+      .then((r) => setPlans(r.plans.filter((p) => !p.is_free)))
+      .catch(() => setPlans([]));
+  }, []);
+
+  async function assignPlan() {
+    if (!assignSlug) return;
+    setAssigning(true);
+    try {
+      const updated = await assignTenantSubscription(detail.id, {
+        plan_slug: assignSlug,
+        valid_until: assignUntil || null,
+      });
+      onUpdated(updated);
+      setActionMsg(t("subscription.assignDone"));
+    } catch {
+      window.alert(t("subscription.assignError"));
+    } finally {
+      setAssigning(false);
+    }
+  }
 
   async function loadUnassigned() {
     setUnassignedLoading(true);
@@ -359,6 +388,46 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
             ) : (
               <p className="mt-3 text-sm text-slate-500">{t("subscription.none")}</p>
             )}
+
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                {t("subscription.assignTitle")}
+              </p>
+              <div className="mt-2 flex flex-wrap items-end gap-3">
+                <label className="text-sm">
+                  <span className="block text-slate-500">{t("subscription.assignPlan")}</span>
+                  <select
+                    className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={assignSlug}
+                    onChange={(e) => setAssignSlug(e.target.value)}
+                  >
+                    <option value="">{t("subscription.assignSelect")}</option>
+                    {plans.map((p) => (
+                      <option key={p.slug} value={p.slug}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-sm">
+                  <span className="block text-slate-500">{t("subscription.assignUntil")}</span>
+                  <input
+                    type="date"
+                    className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    value={assignUntil}
+                    onChange={(e) => setAssignUntil(e.target.value)}
+                  />
+                </label>
+                <Button
+                  size="sm"
+                  disabled={!assignSlug || assigning}
+                  onClick={() => void assignPlan()}
+                >
+                  {assigning ? t("subscription.assigning") : t("subscription.assignCta")}
+                </Button>
+              </div>
+              <p className="mt-1 text-xs text-slate-400">{t("subscription.assignHint")}</p>
+            </div>
           </div>
 
           <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
