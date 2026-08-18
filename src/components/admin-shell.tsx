@@ -1,6 +1,7 @@
 "use client";
 
 import { FeaturesView } from "@/components/features-view";
+import { InsuranceView } from "@/components/insurance-view";
 import { MailboxInbox } from "@/components/mail/mailbox-inbox";
 import { SystemView } from "@/components/system-view";
 import { TenantDetailPanel } from "@/components/tenant-detail-panel";
@@ -38,7 +39,8 @@ export type AdminView =
   | "features"
   | "settings"
   | "audit"
-  | "system";
+  | "system"
+  | "insurance";
 
 const NAV: { id: AdminView; href: string }[] = [
   { id: "dashboard", href: "" },
@@ -47,6 +49,7 @@ const NAV: { id: AdminView; href: string }[] = [
   { id: "plans", href: "/plans" },
   { id: "mail", href: "/mail" },
   { id: "features", href: "/features" },
+  { id: "insurance", href: "/insurance" },
   { id: "settings", href: "/settings" },
   { id: "audit", href: "/audit" },
   { id: "system", href: "/system" },
@@ -135,6 +138,7 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
         {view === "settings" && <SettingsView />}
         {view === "audit" && <AuditView />}
         {view === "features" && <FeaturesView />}
+        {view === "insurance" && <InsuranceView />}
         {view === "system" && <SystemView />}
       </main>
     </div>
