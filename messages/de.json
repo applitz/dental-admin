@@ -16,7 +16,8 @@
     "features": "Funktionen",
     "settings": "Einstellungen",
     "audit": "Audit-Protokoll",
-    "system": "System"
+    "system": "System",
+    "insurance": "Versicherung"
   },
   "challenge": {
     "title": "Plattform-Zugangsschlüssel",
@@ -449,5 +450,30 @@
       "telemed": "Telemedizin"
     },
     "capabilitiesPortal": "Patientenportal"
+  },
+  "insurance": {
+    "title": "Versicherung",
+    "insurers": "Krankenkassen",
+    "addInsurer": "Kasse hinzufügen",
+    "code": "Code",
+    "name": "Name",
+    "active": "Aktiv",
+    "shareRates": "Selbstbehalt-Sätze",
+    "category": "Kategorie",
+    "catProsthetics": "Zahnersatz",
+    "catOrtho": "Kieferorthopädie",
+    "kind": "Art",
+    "percent": "Prozent",
+    "fixed": "Fixbetrag",
+    "value": "Wert",
+    "save": "Speichern",
+    "saved": "Gespeichert",
+    "catalog": "Tarifkatalog",
+    "edition": "Ausgabe",
+    "positions": "Positionen",
+    "amount": "Betrag",
+    "shareCategory": "Selbstbehalt-Kategorie",
+    "noRates": "Keine Sätze gesetzt — der Patient zahlt nichts, bis Sie sie festlegen.",
+    "loadError": "Konnte nicht laden. Erneut versuchen."
   }
 }

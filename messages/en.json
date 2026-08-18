@@ -16,7 +16,8 @@
     "features": "Features",
     "settings": "Settings",
     "audit": "Audit log",
-    "system": "System"
+    "system": "System",
+    "insurance": "Insurance"
   },
   "challenge": {
     "title": "Platform access key",
@@ -449,5 +450,30 @@
       "telemed": "Telemedicine"
     },
     "capabilitiesPortal": "Patient portal"
+  },
+  "insurance": {
+    "title": "Insurance",
+    "insurers": "Insurers",
+    "addInsurer": "Add insurer",
+    "code": "Code",
+    "name": "Name",
+    "active": "Active",
+    "shareRates": "Patient-share rates",
+    "category": "Category",
+    "catProsthetics": "Prosthetics",
+    "catOrtho": "Orthodontics",
+    "kind": "Kind",
+    "percent": "Percent",
+    "fixed": "Fixed",
+    "value": "Value",
+    "save": "Save",
+    "saved": "Saved",
+    "catalog": "Tariff catalog",
+    "edition": "Edition",
+    "positions": "Positions",
+    "amount": "Amount",
+    "shareCategory": "Share category",
+    "noRates": "No rates set — the patient pays nothing until you set them.",
+    "loadError": "Couldn't load. Try again."
   }
 }
