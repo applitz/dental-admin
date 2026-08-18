@@ -9,6 +9,14 @@ import { MarketWizard } from "@/components/market-wizard";
 import { PlanWizard } from "@/components/plan-wizard";
 import { SettingsPanel } from "@/components/settings-panel";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatCard } from "@/components/ui/stat-card";
+import { TableCard, Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
+import { useConfirm } from "@/components/ui/confirm-provider";
+import { useToast } from "@/components/ui/toast";
 import { listTenants, getTenant, type TenantSummary, type TenantDetail } from "@/lib/api";
 import { deleteMarket, deletePlan } from "@/lib/platform-actions";
 import {
@@ -25,7 +33,23 @@ import {
 } from "@/lib/platform-api";
 import { hasGateAccess, redirectToClinicLogin } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { Activity, Globe, LayoutDashboard, Shield, Users } from "lucide-react";
+import {
+  Activity,
+  ArrowLeft,
+  Building2,
+  CreditCard,
+  Globe,
+  Layers,
+  LayoutDashboard,
+  Mail,
+  ScrollText,
+  ServerCog,
+  Settings,
+  Shield,
+  ShieldCheck,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -42,17 +66,17 @@ export type AdminView =
   | "system"
   | "insurance";
 
-const NAV: { id: AdminView; href: string }[] = [
-  { id: "dashboard", href: "" },
-  { id: "tenants", href: "/tenants" },
-  { id: "markets", href: "/markets" },
-  { id: "plans", href: "/plans" },
-  { id: "mail", href: "/mail" },
-  { id: "features", href: "/features" },
-  { id: "insurance", href: "/insurance" },
-  { id: "settings", href: "/settings" },
-  { id: "audit", href: "/audit" },
-  { id: "system", href: "/system" },
+const NAV: { id: AdminView; href: string; icon: LucideIcon }[] = [
+  { id: "dashboard", href: "", icon: LayoutDashboard },
+  { id: "tenants", href: "/tenants", icon: Building2 },
+  { id: "markets", href: "/markets", icon: Globe },
+  { id: "plans", href: "/plans", icon: CreditCard },
+  { id: "mail", href: "/mail", icon: Mail },
+  { id: "features", href: "/features", icon: Layers },
+  { id: "insurance", href: "/insurance", icon: ShieldCheck },
+  { id: "settings", href: "/settings", icon: Settings },
+  { id: "audit", href: "/audit", icon: ScrollText },
+  { id: "system", href: "/system", icon: ServerCog },
 ];
 
 export function AdminShell({ initialView }: { initialView: AdminView }) {
@@ -81,36 +105,44 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
   const base = `/${locale}`;
 
   return (
-    <div className="flex h-screen">
-      <aside className="flex w-56 shrink-0 flex-col overflow-y-auto bg-admin-900 text-white">
-        <div className="border-b border-white/10 px-4 py-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-admin-100">Vodett</p>
-          <p className="text-sm font-medium">{t("common.appName")}</p>
+    <div className="flex h-screen bg-slate-100">
+      <aside className="flex w-60 shrink-0 flex-col overflow-y-auto bg-gradient-to-b from-dental-700 to-dental-900 text-white">
+        <div className="flex h-16 items-center border-b border-white/10 px-5">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">
+              Vodett
+            </p>
+            <p className="text-sm font-semibold">{t("common.appName")}</p>
+          </div>
         </div>
-        <nav className="flex-1 space-y-0.5 p-2">
-          {NAV.map(({ id, href }) => (
-            <Link
-              key={id}
-              href={`${base}${href}`}
-              onClick={() => setView(id)}
-              className={cn(
-                "block rounded-lg px-3 py-2 text-sm transition-colors",
-                view === id ? "bg-white/15 text-white" : "text-admin-100 hover:bg-white/10",
-              )}
-            >
-              {t(`nav.${id}`)}
-            </Link>
-          ))}
+        <nav className="flex-1 space-y-0.5 p-3">
+          {NAV.map(({ id, href, icon: Icon }) => {
+            const active = view === id;
+            return (
+              <Link
+                key={id}
+                href={`${base}${href}`}
+                onClick={() => setView(id)}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  active ? "bg-white/15 text-white shadow-sm" : "text-white/80 hover:bg-white/10 hover:text-white",
+                )}
+              >
+                <Icon className="h-[18px] w-[18px] shrink-0 opacity-90" aria-hidden />
+                {t(`nav.${id}`)}
+              </Link>
+            );
+          })}
         </nav>
         <div className="border-t border-white/10 p-3">
-          <p className="mb-2 flex items-center gap-2 text-xs text-admin-100">
-            <Shield className="h-3.5 w-3.5" />
+          <p className="mb-2 flex items-center gap-2 px-1 text-xs text-white/70">
+            <Shield className="h-3.5 w-3.5 shrink-0" />
             {hasGateAccess() ? t("dashboard.gateActive") : t("dashboard.gateRequired")}
           </p>
           <Button
             variant="ghost"
             size="sm"
-            className="w-full text-admin-100 hover:bg-white/10 hover:text-white"
+            className="w-full justify-start text-white/85 hover:bg-white/10 hover:text-white"
             onClick={() => redirectToClinicLogin(locale, { reauth: true })}
           >
             {t("common.signOut")}
@@ -157,26 +189,13 @@ function DashboardView({
   const t = useTranslations("dashboard");
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-slate-900">{t("title")}</h1>
-      <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Users} label={t("tenants")} value={String(count)} />
-        <Stat icon={Globe} label={t("markets")} value={String(activeMarkets)} />
-        <Stat icon={Activity} label={t("settings")} value={String(settingsCount)} />
-        <Stat icon={Shield} label={hasGateAccess() ? t("gateActive") : t("gateRequired")} value="✓" />
+      <PageHeader title={t("title")} description={t("subtitle")} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={Users} label={t("tenants")} value={String(count)} />
+        <StatCard icon={Globe} label={t("markets")} value={String(activeMarkets)} />
+        <StatCard icon={Activity} label={t("settings")} value={String(settingsCount)} />
+        <StatCard icon={Shield} label={hasGateAccess() ? t("gateActive") : t("gateRequired")} value="✓" />
       </div>
-    </div>
-  );
-}
-
-function Stat({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">{label}</p>
-        <Icon className="h-4 w-4 text-admin-600" />
-      </div>
-      <p className="mt-2 text-2xl font-semibold text-slate-900">{value}</p>
     </div>
   );
 }
@@ -202,11 +221,14 @@ function TenantsView({ tenants, onRefresh }: { tenants: TenantSummary[]; onRefre
   if (selectedId) {
     return (
       <div>
-        <Button variant="ghost" size="sm" className="mb-4" onClick={() => setSelectedId(null)}>
-          ← {t("backToList")}
+        <Button variant="ghost" size="sm" className="mb-4 -ml-2" onClick={() => setSelectedId(null)}>
+          <ArrowLeft className="h-4 w-4" /> {t("backToList")}
         </Button>
         {loadingDetail || !detail ? (
-          <p className="text-sm text-slate-500">{t("loadingDetail")}</p>
+          <div className="space-y-3">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-40 w-full" />
+          </div>
         ) : (
           <TenantDetailPanel
             detail={detail}
@@ -226,39 +248,42 @@ function TenantsView({ tenants, onRefresh }: { tenants: TenantSummary[]; onRefre
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
-      <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+      <PageHeader title={t("title")} description={t("subtitle")} />
       {tenants.length === 0 ? (
-        <p className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500">
-          {t("empty")}
-        </p>
+        <EmptyState icon={Building2} title={t("empty")} />
       ) : (
-        <table className="mt-6 w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-3 text-left">{t("colName")}</th>
-              <th className="px-4 py-3 text-left">{t("colMarket")}</th>
-              <th className="px-4 py-3 text-left">{t("colPlan")}</th>
-              <th className="px-4 py-3 text-left">{t("colPractices")}</th>
-              <th className="px-4 py-3 text-left">{t("colStatus")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {tenants.map((row) => (
-              <tr
-                key={row.id}
-                className="cursor-pointer hover:bg-slate-50"
-                onClick={() => setSelectedId(row.id)}
-              >
-                <td className="px-4 py-3 font-medium">{row.name}</td>
-                <td className="px-4 py-3">{row.market_iso2 ?? "—"}</td>
-                <td className="px-4 py-3">{row.plan_slug ?? "—"}</td>
-                <td className="px-4 py-3">{row.practice_count}</td>
-                <td className="px-4 py-3">{row.is_active ? t("active") : t("suspended")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <TableCard>
+          <Table>
+            <THead>
+              <Tr>
+                <Th>{t("colName")}</Th>
+                <Th>{t("colMarket")}</Th>
+                <Th>{t("colPlan")}</Th>
+                <Th>{t("colPractices")}</Th>
+                <Th>{t("colStatus")}</Th>
+              </Tr>
+            </THead>
+            <TBody>
+              {tenants.map((row) => (
+                <Tr
+                  key={row.id}
+                  className="cursor-pointer hover:bg-slate-50"
+                  onClick={() => setSelectedId(row.id)}
+                >
+                  <Td className="font-medium text-slate-900">{row.name}</Td>
+                  <Td>{row.market_iso2 ?? "—"}</Td>
+                  <Td>{row.plan_slug ?? "—"}</Td>
+                  <Td>{row.practice_count}</Td>
+                  <Td>
+                    <Badge tone={row.is_active ? "success" : "muted"}>
+                      {row.is_active ? t("active") : t("suspended")}
+                    </Badge>
+                  </Td>
+                </Tr>
+              ))}
+            </TBody>
+          </Table>
+        </TableCard>
       )}
     </div>
   );
@@ -269,9 +294,8 @@ function AuditView() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
-      <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
-      <p className="mt-8 max-w-xl rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+      <PageHeader title={t("title")} description={t("subtitle")} />
+      <p className="max-w-xl rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
         {t("logOnly")}
       </p>
     </div>
@@ -301,14 +325,14 @@ function SettingsView() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
-      <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+      <PageHeader title={t("title")} description={t("subtitle")} />
       {loading ? (
-        <p className="mt-8 text-sm text-slate-500">{t("loading")}</p>
-      ) : (
-        <div className="mt-6">
-          <SettingsPanel items={items} groups={groups} onSaved={reload} />
+        <div className="space-y-3">
+          <Skeleton className="h-9 w-72" />
+          <Skeleton className="h-64 w-full" />
         </div>
+      ) : (
+        <SettingsPanel items={items} groups={groups} onSaved={reload} />
       )}
     </div>
   );
@@ -325,6 +349,8 @@ function channelSummary(m: PlatformMarketSummary, t: ReturnType<typeof useTransl
 
 function MarketsView() {
   const t = useTranslations("markets");
+  const confirm = useConfirm();
+  const toast = useToast();
   const [markets, setMarkets] = useState<PlatformMarketSummary[]>([]);
   const [featureCatalog, setFeatureCatalog] = useState<string[]>([]);
   const [mode, setMode] = useState<"list" | "create" | "edit">("list");
@@ -354,29 +380,27 @@ function MarketsView() {
   };
 
   const removeMarket = async (iso2: string) => {
-    if (!window.confirm(t("confirmDelete"))) return;
+    if (!(await confirm({ title: t("delete"), message: t("confirmDelete"), tone: "destructive" }))) return;
     try {
       await deleteMarket(iso2);
       reload();
     } catch {
-      window.alert(t("deleteError"));
+      toast.error(t("deleteError"));
     }
   };
 
   if (mode === "create") {
     return (
       <div>
-        <h1 className="text-2xl font-semibold">{t("newTitle")}</h1>
-        <div className="mt-6">
-          <MarketWizard
-            featureCatalog={featureCatalog}
-            onCancel={() => setMode("list")}
-            onDone={() => {
-              setMode("list");
-              reload();
-            }}
-          />
-        </div>
+        <PageHeader title={t("newTitle")} onBack={() => setMode("list")} backLabel={t("title")} />
+        <MarketWizard
+          featureCatalog={featureCatalog}
+          onCancel={() => setMode("list")}
+          onDone={() => {
+            setMode("list");
+            reload();
+          }}
+        />
       </div>
     );
   }
@@ -384,78 +408,88 @@ function MarketsView() {
   if (mode === "edit" && editing) {
     return (
       <div>
-        <h1 className="text-2xl font-semibold">{t("editTitle", { name: editing.name })}</h1>
-        <div className="mt-6">
-          <MarketWizard
-            featureCatalog={featureCatalog}
-            initial={editing}
-            onCancel={() => {
-              setMode("list");
-              setEditing(null);
-            }}
-            onDone={() => {
-              setMode("list");
-              setEditing(null);
-              reload();
-            }}
-          />
-        </div>
+        <PageHeader
+          title={t("editTitle", { name: editing.name })}
+          onBack={() => {
+            setMode("list");
+            setEditing(null);
+          }}
+          backLabel={t("title")}
+        />
+        <MarketWizard
+          featureCatalog={featureCatalog}
+          initial={editing}
+          onCancel={() => {
+            setMode("list");
+            setEditing(null);
+          }}
+          onDone={() => {
+            setMode("list");
+            setEditing(null);
+            reload();
+          }}
+        />
       </div>
     );
   }
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
-          <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
-        </div>
-        <Button onClick={() => setMode("create")}>{t("addCountry")}</Button>
-      </div>
+      <PageHeader
+        title={t("title")}
+        description={t("subtitle")}
+        action={<Button onClick={() => setMode("create")}>{t("addCountry")}</Button>}
+      />
       {loading ? (
-        <p className="mt-8 text-sm text-slate-500">{t("loading")}</p>
+        <Skeleton className="h-64 w-full" />
       ) : markets.length === 0 ? (
-        <p className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center text-sm text-slate-500">
-          {t("empty")}
-        </p>
+        <EmptyState icon={Globe} title={t("empty")} />
       ) : (
-        <table className="mt-6 w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-3 text-left">{t("colCountry")}</th>
-              <th className="px-4 py-3 text-left">{t("colLocales")}</th>
-              <th className="px-4 py-3 text-left">{t("colSms")}</th>
-              <th className="px-4 py-3 text-right">{t("colActions")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {markets.map((m) => (
-              <tr key={m.id}>
-                <td className="px-4 py-3">
-                  <span className="font-medium">{m.name}</span>
-                  <span className="ml-2 text-xs text-slate-400">{m.iso2}</span>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                    <span className={m.is_active ? "font-medium text-emerald-600" : "text-slate-400"}>
-                      {m.is_active ? t("active") : t("inactive")}
-                    </span>
-                    <span className="text-slate-400">{channelSummary(m, t)}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3">{m.locale_count}</td>
-                <td className="px-4 py-3">{m.sms_count ? t("smsConfigured", { count: m.sms_count }) : t("smsDefault")}</td>
-                <td className="px-4 py-3 text-right">
-                  <Button variant="ghost" size="sm" onClick={() => void openEdit(m.iso2)}>
-                    {t("edit")}
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-rose-600" onClick={() => void removeMarket(m.iso2)}>
-                    {t("delete")}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <TableCard>
+          <Table>
+            <THead>
+              <Tr>
+                <Th>{t("colCountry")}</Th>
+                <Th>{t("colLocales")}</Th>
+                <Th>{t("colSms")}</Th>
+                <Th className="text-right">{t("colActions")}</Th>
+              </Tr>
+            </THead>
+            <TBody>
+              {markets.map((m) => (
+                <Tr key={m.id}>
+                  <Td>
+                    <span className="font-medium text-slate-900">{m.name}</span>
+                    <span className="ml-2 text-xs text-slate-400">{m.iso2}</span>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                      <Badge tone={m.is_active ? "success" : "muted"}>
+                        {m.is_active ? t("active") : t("inactive")}
+                      </Badge>
+                      <span className="text-slate-400">{channelSummary(m, t)}</span>
+                    </div>
+                  </Td>
+                  <Td>{m.locale_count}</Td>
+                  <Td>{m.sms_count ? t("smsConfigured", { count: m.sms_count }) : t("smsDefault")}</Td>
+                  <Td className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => void openEdit(m.iso2)}>
+                        {t("edit")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => void removeMarket(m.iso2)}
+                      >
+                        {t("delete")}
+                      </Button>
+                    </div>
+                  </Td>
+                </Tr>
+              ))}
+            </TBody>
+          </Table>
+        </TableCard>
       )}
     </div>
   );
@@ -463,6 +497,8 @@ function MarketsView() {
 
 function PlansView() {
   const t = useTranslations("plans");
+  const confirm = useConfirm();
+  const toast = useToast();
   const [mode, setMode] = useState<"list" | "create" | "edit">("list");
   const [plans, setPlans] = useState<Plan[]>([]);
   const [editing, setEditing] = useState<Plan | undefined>(undefined);
@@ -476,12 +512,12 @@ function PlansView() {
     getPlan(slug).then((p) => { setEditing(p); setMode("edit"); }).catch(() => {});
   };
   const onDelete = async (slug: string) => {
-    if (!window.confirm(t("confirmDelete", { slug }))) return;
+    if (!(await confirm({ title: t("delete"), message: t("confirmDelete", { slug }), tone: "destructive" }))) return;
     try {
       await deletePlan(slug);
       reload();
     } catch {
-      window.alert(t("deleteError"));
+      toast.error(t("deleteError"));
     }
   };
 
@@ -503,48 +539,64 @@ function PlansView() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
-          <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
-        </div>
-        <button className="rounded-lg bg-admin-600 px-4 py-2 text-sm text-white"
-          onClick={() => { setEditing(undefined); setMode("create"); }}>{t("newPlan")}</button>
-      </div>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2 text-left">{t("colName")}</th>
-              <th className="px-4 py-2 text-left">{t("colSlug")}</th>
-              <th className="px-4 py-2 text-left">{t("colPrice")}</th>
-              <th className="px-4 py-2 text-left">{t("colStatus")}</th>
-              <th className="px-4 py-2"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {plans.map((p) => (
-              <tr key={p.id}>
-                <td className="px-4 py-2 font-medium">{p.name}</td>
-                <td className="px-4 py-2 text-slate-500">{p.slug}</td>
-                <td className="px-4 py-2">{priceSummary(p)}</td>
-                <td className="px-4 py-2">
-                  {p.is_active ? <span className="text-emerald-600">{t("active")}</span>
-                               : <span className="text-slate-400">{t("inactive")}</span>}
-                  {p.is_free && <span className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-xs">{t("free")}</span>}
-                </td>
-                <td className="px-4 py-2 text-right">
-                  <button className="text-admin-600" onClick={() => onEdit(p.slug)}>{t("edit")}</button>
-                  <button className="ml-3 text-rose-600" onClick={() => onDelete(p.slug)}>{t("delete")}</button>
-                </td>
-              </tr>
-            ))}
-            {plans.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-12 text-center text-slate-500">{t("empty")}</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <PageHeader
+        title={t("title")}
+        description={t("subtitle")}
+        action={
+          <Button onClick={() => { setEditing(undefined); setMode("create"); }}>
+            {t("newPlan")}
+          </Button>
+        }
+      />
+      {plans.length === 0 ? (
+        <EmptyState icon={CreditCard} title={t("empty")} />
+      ) : (
+        <TableCard>
+          <Table>
+            <THead>
+              <Tr>
+                <Th>{t("colName")}</Th>
+                <Th>{t("colSlug")}</Th>
+                <Th>{t("colPrice")}</Th>
+                <Th>{t("colStatus")}</Th>
+                <Th className="text-right" />
+              </Tr>
+            </THead>
+            <TBody>
+              {plans.map((p) => (
+                <Tr key={p.id}>
+                  <Td className="font-medium text-slate-900">{p.name}</Td>
+                  <Td className="text-slate-500">{p.slug}</Td>
+                  <Td>{priceSummary(p)}</Td>
+                  <Td>
+                    <div className="flex items-center gap-2">
+                      <Badge tone={p.is_active ? "success" : "muted"}>
+                        {p.is_active ? t("active") : t("inactive")}
+                      </Badge>
+                      {p.is_free && <Badge tone="info">{t("free")}</Badge>}
+                    </div>
+                  </Td>
+                  <Td className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => onEdit(p.slug)}>
+                        {t("edit")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => onDelete(p.slug)}
+                      >
+                        {t("delete")}
+                      </Button>
+                    </div>
+                  </Td>
+                </Tr>
+              ))}
+            </TBody>
+          </Table>
+        </TableCard>
+      )}
     </div>
   );
 }

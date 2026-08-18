@@ -6,6 +6,12 @@ import {
   createPlan, updatePlan, getModuleCatalog, getCapabilityCatalog,
   type Plan, type PlanPrice, type ModuleCatalogItem, type CapabilityCatalogItem,
 } from "@/lib/platform-api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { Field } from "@/components/ui/field";
+import { Card } from "@/components/ui/card";
 
 const CURRENCIES = ["EUR", "USD", "GBP", "CHF"];
 const INTERVALS: PlanPrice["interval"][] = ["month", "year"];
@@ -280,34 +286,27 @@ export function PlanWizard({
   return (
     <div className="max-w-2xl space-y-4">
       <h2 className="text-xl font-semibold">{t(isEdit ? "wizard.editTitle" : "wizard.newTitle")}</h2>
-      {error && <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{error}</div>}
+      {error && <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
 
       <div className="grid grid-cols-2 gap-3">
-        <label className="text-sm">
-          <span className="mb-1 block text-slate-500">{t("wizard.slug")}</span>
-          <input className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50"
-            value={slug} disabled={isEdit}
+        <Field label={t("wizard.slug")}>
+          <Input value={slug} disabled={isEdit}
             onChange={(e) => setSlug(e.target.value.toLowerCase())} />
-        </label>
-        <label className="text-sm">
-          <span className="mb-1 block text-slate-500">{t("wizard.name")}</span>
-          <input className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            value={name} onChange={(e) => setName(e.target.value)} />
-        </label>
+        </Field>
+        <Field label={t("wizard.name")}>
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
+        </Field>
       </div>
 
-      <label className="block text-sm">
-        <span className="mb-1 block text-slate-500">{t("wizard.description")}</span>
-        <textarea className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          value={description} onChange={(e) => setDescription(e.target.value)} />
-      </label>
+      <Field label={t("wizard.description")}>
+        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+      </Field>
 
       <div className="flex items-center gap-4 text-sm">
-        <label className="text-sm">
-          <span className="mb-1 block text-slate-500">{t("wizard.tier")}</span>
-          <input type="number" className="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+        <Field label={t("wizard.tier")}>
+          <Input type="number" className="w-24"
             value={tier} onChange={(e) => setTier(Number(e.target.value))} />
-        </label>
+        </Field>
         <label className="flex items-center gap-2">
           <input type="checkbox" checked={isFree} onChange={(e) => setIsFree(e.target.checked)} />
           {t("wizard.freePlan")}
@@ -318,13 +317,12 @@ export function PlanWizard({
         </label>
       </div>
 
-      <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+      <Card className="space-y-2 p-3">
         <span className="block text-sm font-medium">{t("limits")}</span>
         <div className="grid grid-cols-2 gap-3">
           <label className="text-sm">
             <span className="mb-1 block text-slate-500">{t("maxUsers")}</span>
-            <input type="number" min="1" disabled={unlimitedUsers}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50"
+            <Input type="number" min="1" disabled={unlimitedUsers}
               value={maxUsers} onChange={(e) => setMaxUsers(Number(e.target.value))} />
             <label className="mt-1 flex items-center gap-2 text-slate-500">
               <input type="checkbox" checked={unlimitedUsers}
@@ -334,8 +332,7 @@ export function PlanWizard({
           </label>
           <label className="text-sm">
             <span className="mb-1 block text-slate-500">{t("maxPatients")}</span>
-            <input type="number" min="1" disabled={unlimitedPatients}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50"
+            <Input type="number" min="1" disabled={unlimitedPatients}
               value={maxPatients} onChange={(e) => setMaxPatients(Number(e.target.value))} />
             <label className="mt-1 flex items-center gap-2 text-slate-500">
               <input type="checkbox" checked={unlimitedPatients}
@@ -344,9 +341,9 @@ export function PlanWizard({
             </label>
           </label>
         </div>
-      </div>
+      </Card>
 
-      <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+      <Card className="space-y-2 p-3">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">{t("modulesTitle")}</span>
           <label className="flex items-center gap-2 text-sm text-slate-500">
@@ -372,9 +369,9 @@ export function PlanWizard({
             );
           })}
         </div>
-      </div>
+      </Card>
 
-      <div className="space-y-3 rounded-lg border border-slate-200 p-3">
+      <Card className="space-y-3 p-3">
         <div>
           <span className="block text-sm font-medium">{t("capabilitiesTitle")}</span>
           <span className="block text-xs text-slate-500">{t("capabilitiesHelper")}</span>
@@ -408,9 +405,9 @@ export function PlanWizard({
             <div className="space-y-1.5">{otherCapabilities.map(renderCapabilityRow)}</div>
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+      <Card className="space-y-2 p-3">
         <span className="block text-sm font-medium">{t("addons")}</span>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={rbac} onChange={(e) => setRbac(e.target.checked)} />
@@ -421,42 +418,40 @@ export function PlanWizard({
             onChange={(e) => setPrioritySupport(e.target.checked)} />
           {t("prioritySupport")}
         </label>
-      </div>
+      </Card>
 
       {!isFree && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{t("wizard.prices")}</span>
-            <button className="text-sm text-admin-600" onClick={addPrice}>{t("wizard.addPrice")}</button>
+            <Button variant="subtle" size="sm" onClick={addPrice}>{t("wizard.addPrice")}</Button>
           </div>
           {prices.map((p, i) => (
             <div key={i} className="flex items-center gap-2">
-              <select className="rounded-lg border border-slate-200 px-2 py-2 text-sm"
+              <Select size="sm" wrapperClassName="w-24"
                 value={p.currency} onChange={(e) => setPrice(i, { currency: e.target.value })}>
                 {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <select className="rounded-lg border border-slate-200 px-2 py-2 text-sm"
+              </Select>
+              <Select size="sm" wrapperClassName="w-28"
                 value={p.interval}
                 onChange={(e) => setPrice(i, { interval: e.target.value as PlanPrice["interval"] })}>
                 {INTERVALS.map((iv) => <option key={iv} value={iv}>{iv}</option>)}
-              </select>
-              <input type="number" min="0" placeholder="0.00"
-                className="w-28 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              </Select>
+              <Input type="number" min="0" placeholder="0.00"
+                className="w-28"
                 value={p.amount}
                 onChange={(e) => setPrice(i, { amount: e.target.value })} />
-              <button className="text-rose-600" onClick={() => removePrice(i)}>{t("wizard.remove")}</button>
+              <Button variant="destructive" size="sm" onClick={() => removePrice(i)}>{t("wizard.remove")}</Button>
             </div>
           ))}
         </div>
       )}
 
       <div className="flex gap-2">
-        <button disabled={busy}
-          className="rounded-lg bg-admin-600 px-4 py-2 text-sm text-white disabled:opacity-50"
-          onClick={submit}>{t(isEdit ? "wizard.save" : "wizard.create")}</button>
-        <button className="rounded-lg border border-slate-300 px-4 py-2 text-sm" onClick={onCancel}>
+        <Button disabled={busy} onClick={submit}>{t(isEdit ? "wizard.save" : "wizard.create")}</Button>
+        <Button variant="outline" onClick={onCancel}>
           {t("wizard.cancel")}
-        </button>
+        </Button>
       </div>
     </div>
   );

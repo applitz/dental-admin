@@ -9,6 +9,13 @@ import {
 } from "@/lib/platform-api";
 import type { PlatformMarketLocale } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Field } from "@/components/ui/field";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChipTabs } from "@/components/ui/tabs";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -42,6 +49,7 @@ type WizardProps = {
 
 export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
   const t = useTranslations("markets");
+  const confirm = useConfirm();
   const localeNames = t.raw("wizard.localeNames") as Record<string, string>;
   const localeLabel = (loc: string) => localeNames[loc] ?? loc.toUpperCase();
   const isEdit = Boolean(initial);
@@ -176,12 +184,12 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
 
   const countryName = name.trim() || iso2;
 
-  const toggleLocale = (locale: string, nextEnabled: boolean) => {
+  const toggleLocale = async (locale: string, nextEnabled: boolean) => {
     const msg = t(nextEnabled ? "wizard.localeAddConfirm" : "wizard.localeRemoveConfirm", {
       locale: localeLabel(locale),
       country: countryName,
     });
-    if (!window.confirm(msg)) return;
+    if (!(await confirm({ title: t("wizard.localesTitle"), message: msg, tone: "destructive" }))) return;
     setLocales((prev) => {
       const exists = prev.some((l) => l.locale === locale);
       if (!exists) {
@@ -193,9 +201,9 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
     });
   };
 
-  const changeDefaultLocale = (locale: string) => {
+  const changeDefaultLocale = async (locale: string) => {
     const msg = t("wizard.localeAddConfirm", { locale: localeLabel(locale), country: countryName });
-    if (!window.confirm(msg)) return;
+    if (!(await confirm({ title: t("wizard.localesTitle"), message: msg, tone: "destructive" }))) return;
     setLocales((prev) => {
       const exists = prev.some((l) => l.locale === locale);
       const base = exists ? prev : [...prev, { locale, enabled: true, is_default: false }];
@@ -329,21 +337,14 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
   const tzOptions = pack?.timezones ?? [];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex border-b border-slate-100 px-6 py-4">
-        {STEPS.map((s, i) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => goTo(s)}
-            className={cn(
-              "mr-4 text-sm font-medium",
-              step === s ? "text-admin-700" : "text-slate-400 hover:text-slate-600",
-            )}
-          >
-            {i + 1}. {t(`wizard.${s}`)}
-          </button>
-        ))}
+    <Card>
+      <div className="border-b border-slate-100 px-6 py-4">
+        <ChipTabs
+          size="sm"
+          tabs={STEPS.map((s, i) => ({ id: s, label: `${i + 1}. ${t(`wizard.${s}`)}` }))}
+          active={step}
+          onChange={(id) => goTo(id as Step)}
+        />
       </div>
 
       <div className="space-y-4 p-6">
@@ -351,8 +352,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
           <>
             <p className="text-sm text-slate-500">{t("wizard.countryHint")}</p>
             <Field label={t("fields.iso2")}>
-              <input
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              <Input
                 maxLength={2}
                 disabled={isEdit}
                 value={iso2}
@@ -362,20 +362,12 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
             {packLoading && <p className="text-xs text-slate-400">{t("wizard.packLoading")}</p>}
             {packError && <p className="text-xs text-amber-600">{packError}</p>}
             <Field label={t("fields.name")}>
-              <input
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label={t("fields.timezone")}>
                 {tzOptions.length > 0 ? (
-                  <select
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    value={timezone}
-                    onChange={(e) => setTimezone(e.target.value)}
-                  >
+                  <Select value={timezone} onChange={(e) => setTimezone(e.target.value)}>
                     {timezone === "" && <option value="">{t("wizard.timezoneSelectPlaceholder")}</option>}
                     {timezone !== "" && !tzOptions.includes(timezone) && (
                       <option value={timezone}>{timezone}</option>
@@ -385,10 +377,9 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                         {tz}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 ) : (
-                  <input
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  <Input
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
                     placeholder={t("wizard.timezoneFreeformPlaceholder")}
@@ -397,8 +388,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
               </Field>
               <Field label={t("fields.currency")}>
                 <div className="flex items-center gap-2">
-                  <input
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  <Input
                     maxLength={3}
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value.toUpperCase())}
@@ -409,24 +399,18 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                 </div>
               </Field>
               <Field label={t("fields.dialCode")}>
-                <input
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                  value={dialCode}
-                  onChange={(e) => setDialCode(e.target.value)}
-                  placeholder="+49"
-                />
+                <Input value={dialCode} onChange={(e) => setDialCode(e.target.value)} placeholder="+49" />
               </Field>
             </div>
             <Field label={t("fields.compliance")}>
-              <textarea
-                className="w-full min-h-[80px] rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                value={compliance}
-                onChange={(e) => setCompliance(e.target.value)}
-              />
+              <Textarea value={compliance} onChange={(e) => setCompliance(e.target.value)} />
             </Field>
 
-            <div className="space-y-2 rounded-lg border border-slate-200 p-3">
-              <span className="block text-sm font-medium">{t("wizard.localesTitle")}</span>
+            <Card className="shadow-none">
+              <CardHeader className="pb-0">
+                <CardTitle className="text-sm">{t("wizard.localesTitle")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-3">
               {localeOptions.length === 0 ? (
                 <p className="text-sm text-slate-400">
                   {packLoading ? t("wizard.localesLoading") : t("wizard.localesEnterCode")}
@@ -465,7 +449,8 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
               {!hasValidLocales && (
                 <p className="text-xs text-amber-600">{t("wizard.localesValidationHint")}</p>
               )}
-            </div>
+              </CardContent>
+            </Card>
           </>
         )}
 
@@ -577,14 +562,14 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                 </div>
                 {taxRows.map((row, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <input
-                      className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    <Input
+                      className="flex-1"
                       placeholder={t("wizard.taxNamePlaceholder")}
                       value={row.name}
                       onChange={(e) => updateTaxRow(i, { name: e.target.value })}
                     />
-                    <select
-                      className="w-32 rounded-lg border border-slate-200 px-2 py-2 text-sm"
+                    <Select
+                      wrapperClassName="w-32"
                       value={row.kind}
                       onChange={(e) =>
                         updateTaxRow(i, { kind: e.target.value as TaxRow["kind"] })
@@ -592,23 +577,25 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                     >
                       <option value="percent">{t("wizard.taxPercent")}</option>
                       <option value="fixed">{t("wizard.taxFixed")}</option>
-                    </select>
-                    <input
+                    </Select>
+                    <Input
                       type="number"
                       min={0}
                       step="0.01"
-                      className="w-28 rounded-lg border border-slate-200 px-3 py-2 text-right text-sm"
+                      className="w-28 text-right"
                       value={row.value}
                       onChange={(e) => updateTaxRow(i, { value: e.target.value })}
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       className="w-8 text-slate-400 hover:text-red-600"
                       onClick={() => removeTaxRow(i)}
                       aria-label={t("wizard.taxRemove")}
                     >
                       ✕
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -653,12 +640,12 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
           <div className="space-y-4">
             <p className="text-sm text-slate-500">{t("wizard.smsHint")}</p>
             {smsSenders.map((sms, idx) => (
-              <div key={idx} className="rounded-lg border border-slate-100 p-4">
+              <Card key={idx} className="shadow-none">
+                <CardContent className="pt-4">
                 <p className="text-xs font-semibold uppercase text-slate-400">{sms.purpose}</p>
                 <div className="mt-2 grid gap-3 sm:grid-cols-2">
                   <Field label={t("fields.senderType")}>
-                    <select
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    <Select
                       value={sms.sender_type}
                       onChange={(e) => {
                         const next = [...smsSenders];
@@ -669,11 +656,10 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                       <option value="alphanumeric">Alphanumeric</option>
                       <option value="long_code">Long code</option>
                       <option value="short_code">Short code</option>
-                    </select>
+                    </Select>
                   </Field>
                   <Field label={t("fields.senderId")}>
-                    <input
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    <Input
                       placeholder={t("fields.senderIdPlaceholder")}
                       value={sms.sender_id}
                       onChange={(e) => {
@@ -684,8 +670,8 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                     />
                   </Field>
                   <Field label={t("fields.messagingSid")}>
-                    <input
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
+                    <Input
+                      className="sm:col-span-2"
                       placeholder={t("fields.messagingSidPlaceholder")}
                       value={sms.messaging_profile_id ?? ""}
                       onChange={(e) => {
@@ -699,7 +685,8 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
                     />
                   </Field>
                 </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
@@ -739,15 +726,6 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block text-sm">
-      <span className="font-medium text-slate-700">{label}</span>
-      <div className="mt-1">{children}</div>
-    </label>
+    </Card>
   );
 }

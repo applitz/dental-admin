@@ -16,6 +16,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { TableCard, Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
+import { useToast } from "@/components/ui/toast";
 
 const SHARE_CATEGORIES: ShareRule["share_category"][] = ["prosthetics", "ortho"];
 
@@ -29,6 +36,7 @@ const EMPTY_RATE_ROWS: Record<ShareRule["share_category"], ShareRowState> = {
 export function InsuranceView() {
   const t = useTranslations("insurance");
   const tc = useTranslations("common");
+  const toast = useToast();
 
   // --- Insurers ---
   const [insurers, setInsurers] = useState<InsurerAdmin[]>([]);
@@ -60,7 +68,7 @@ export function InsuranceView() {
       setNewName("");
       reloadInsurers();
     } catch {
-      window.alert(t("loadError"));
+      toast.error(t("loadError"));
     } finally {
       setCreating(false);
     }
@@ -71,7 +79,7 @@ export function InsuranceView() {
       const updated = await updateInsurer(id, { name });
       setInsurers((prev) => prev.map((i) => (i.id === id ? updated : i)));
     } catch {
-      window.alert(t("loadError"));
+      toast.error(t("loadError"));
       reloadInsurers();
     }
   };
@@ -81,7 +89,7 @@ export function InsuranceView() {
       const updated = await updateInsurer(id, { is_active });
       setInsurers((prev) => prev.map((i) => (i.id === id ? updated : i)));
     } catch {
-      window.alert(t("loadError"));
+      toast.error(t("loadError"));
       reloadInsurers();
     }
   };
@@ -137,7 +145,7 @@ export function InsuranceView() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      window.alert(t("loadError"));
+      toast.error(t("loadError"));
     } finally {
       setSaving(false);
     }
@@ -187,7 +195,7 @@ export function InsuranceView() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
+      <PageHeader title={t("title")} />
 
       {/* 1. Insurers */}
       <section className="mt-8">
@@ -195,76 +203,75 @@ export function InsuranceView() {
         {loadingInsurers ? (
           <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
         ) : insurersError ? (
-          <p className="mt-4 text-sm text-rose-600">{t("loadError")}</p>
+          <p className="mt-4 text-sm text-red-600">{t("loadError")}</p>
         ) : (
-          <table className="mt-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3 text-left">{t("code")}</th>
-                <th className="px-4 py-3 text-left">{t("name")}</th>
-                <th className="px-4 py-3 text-left">{t("active")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {insurers.map((row) => (
-                <tr
-                  key={row.id}
-                  onClick={() => setSelectedInsurerId(row.id)}
-                  className={cn(
-                    "cursor-pointer",
-                    selectedInsurerId === row.id ? "bg-admin-50" : "hover:bg-slate-50",
-                  )}
-                >
-                  <td className="px-4 py-3 font-medium">{row.code}</td>
-                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      key={`${row.id}-${row.name}`}
-                      defaultValue={row.name}
-                      onBlur={(e) => {
-                        const value = e.target.value.trim();
-                        if (value && value !== row.name) void saveInsurerName(row.id, value);
-                      }}
-                      className="w-full rounded border border-transparent px-2 py-1 text-sm hover:border-slate-300 focus:border-admin-500 focus:outline-none"
-                    />
-                  </td>
-                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={row.is_active}
-                      onChange={(e) => void toggleInsurerActive(row.id, e.target.checked)}
-                    />
-                  </td>
-                </tr>
-              ))}
-              <tr>
-                <td className="px-4 py-3">
-                  <input
-                    value={newCode}
-                    onChange={(e) => setNewCode(e.target.value)}
-                    placeholder={t("code")}
-                    className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder={t("name")}
-                    className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <button
-                    disabled={creating || !newCode.trim() || !newName.trim()}
-                    onClick={() => void addInsurer()}
-                    className="rounded-lg bg-admin-600 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+          <TableCard className="mt-4">
+            <Table>
+              <THead>
+                <Tr>
+                  <Th>{t("code")}</Th>
+                  <Th>{t("name")}</Th>
+                  <Th>{t("active")}</Th>
+                </Tr>
+              </THead>
+              <TBody>
+                {insurers.map((row) => (
+                  <Tr
+                    key={row.id}
+                    onClick={() => setSelectedInsurerId(row.id)}
+                    className={cn(
+                      "cursor-pointer",
+                      selectedInsurerId === row.id ? "bg-dental-50" : "hover:bg-slate-50",
+                    )}
                   >
-                    {t("addInsurer")}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    <Td className="font-medium text-slate-900">{row.code}</Td>
+                    <Td onClick={(e) => e.stopPropagation()}>
+                      <Input
+                        key={`${row.id}-${row.name}`}
+                        defaultValue={row.name}
+                        onBlur={(e) => {
+                          const value = e.target.value.trim();
+                          if (value && value !== row.name) void saveInsurerName(row.id, value);
+                        }}
+                      />
+                    </Td>
+                    <Td onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={row.is_active}
+                        onChange={(e) => void toggleInsurerActive(row.id, e.target.checked)}
+                      />
+                    </Td>
+                  </Tr>
+                ))}
+                <Tr>
+                  <Td>
+                    <Input
+                      value={newCode}
+                      onChange={(e) => setNewCode(e.target.value)}
+                      placeholder={t("code")}
+                    />
+                  </Td>
+                  <Td>
+                    <Input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder={t("name")}
+                    />
+                  </Td>
+                  <Td>
+                    <Button
+                      size="sm"
+                      disabled={creating || !newCode.trim() || !newName.trim()}
+                      onClick={() => void addInsurer()}
+                    >
+                      {t("addInsurer")}
+                    </Button>
+                  </Td>
+                </Tr>
+              </TBody>
+            </Table>
+          </TableCard>
         )}
       </section>
 
@@ -276,14 +283,14 @@ export function InsuranceView() {
             —
           </p>
         ) : (
-          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <Card className="mt-4 p-5">
             <p className="text-sm font-medium text-slate-700">
               {selectedInsurer.name} <span className="text-xs text-slate-400">{selectedInsurer.code}</span>
             </p>
             {loadingRates ? (
               <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
             ) : ratesError ? (
-              <p className="mt-4 text-sm text-rose-600">{t("loadError")}</p>
+              <p className="mt-4 text-sm text-red-600">{t("loadError")}</p>
             ) : (
               <div className="mt-4 space-y-3">
                 {!hasAnyRate && <p className="text-sm text-amber-600">{t("noRates")}</p>}
@@ -292,7 +299,9 @@ export function InsuranceView() {
                     <span className="w-32 shrink-0 text-sm text-slate-600">
                       {cat === "prosthetics" ? t("catProsthetics") : t("catOrtho")}
                     </span>
-                    <select
+                    <Select
+                      size="sm"
+                      wrapperClassName="w-32"
                       value={rateRows[cat].kind}
                       onChange={(e) =>
                         setRateRows((prev) => ({
@@ -300,12 +309,11 @@ export function InsuranceView() {
                           [cat]: { ...prev[cat], kind: e.target.value as ShareRule["kind"] },
                         }))
                       }
-                      className="rounded border border-slate-300 px-2 py-1 text-sm"
                     >
                       <option value="percent">{t("percent")}</option>
                       <option value="fixed">{t("fixed")}</option>
-                    </select>
-                    <input
+                    </Select>
+                    <Input
                       type="number"
                       step="0.01"
                       min="0"
@@ -317,23 +325,19 @@ export function InsuranceView() {
                         }))
                       }
                       placeholder={t("value")}
-                      className="w-32 rounded border border-slate-300 px-2 py-1 text-sm"
+                      className="w-32"
                     />
                   </div>
                 ))}
                 <div className="flex items-center gap-3 pt-2">
-                  <button
-                    disabled={saving}
-                    onClick={() => void saveRates()}
-                    className="rounded-lg bg-admin-600 px-4 py-2 text-sm text-white disabled:opacity-50"
-                  >
+                  <Button disabled={saving} onClick={() => void saveRates()}>
                     {t("save")}
-                  </button>
+                  </Button>
                   {saved && <span className="text-sm text-emerald-600">{t("saved")}</span>}
                 </div>
               </div>
             )}
-          </div>
+          </Card>
         )}
       </section>
 
@@ -348,53 +352,55 @@ export function InsuranceView() {
           </p>
         ) : (
           <div className="mt-4">
-            <select
+            <Select
               value={selectedEditionId}
               onChange={(e) => setSelectedEditionId(e.target.value)}
-              className="rounded border border-slate-300 px-3 py-2 text-sm"
+              wrapperClassName="max-w-md"
             >
               {editions.map((ed) => (
                 <option key={ed.id} value={ed.id}>
                   {ed.label} — {ed.contract} ({ed.country})
                 </option>
               ))}
-            </select>
+            </Select>
             {loadingPositions ? (
               <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
             ) : (
-              <table className="mt-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3 text-left">{t("code")}</th>
-                    <th className="px-4 py-3 text-left">Block</th>
-                    <th className="px-4 py-3 text-left">{t("name")}</th>
-                    <th className="px-4 py-3 text-left">{t("amount")}</th>
-                    <th className="px-4 py-3 text-left">{t("shareCategory")}</th>
-                    <th className="px-4 py-3 text-left">Age</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {positions.map((p) => (
-                    <tr key={p.id}>
-                      <td className="px-4 py-3 font-medium">{p.code}</td>
-                      <td className="px-4 py-3">{p.block}</td>
-                      <td className="px-4 py-3">{p.title_de}</td>
-                      <td className="px-4 py-3">€{p.amount}</td>
-                      <td className="px-4 py-3">{p.share_category}</td>
-                      <td className="px-4 py-3">
-                        {p.age_min ?? "—"}–{p.age_max ?? "—"}
-                      </td>
-                    </tr>
-                  ))}
-                  {positions.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                        —
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <TableCard className="mt-4">
+                <Table>
+                  <THead>
+                    <Tr>
+                      <Th>{t("code")}</Th>
+                      <Th>Block</Th>
+                      <Th>{t("name")}</Th>
+                      <Th>{t("amount")}</Th>
+                      <Th>{t("shareCategory")}</Th>
+                      <Th>Age</Th>
+                    </Tr>
+                  </THead>
+                  <TBody>
+                    {positions.map((p) => (
+                      <Tr key={p.id}>
+                        <Td className="font-medium text-slate-900">{p.code}</Td>
+                        <Td>{p.block}</Td>
+                        <Td>{p.title_de}</Td>
+                        <Td>€{p.amount}</Td>
+                        <Td>{p.share_category}</Td>
+                        <Td>
+                          {p.age_min ?? "—"}–{p.age_max ?? "—"}
+                        </Td>
+                      </Tr>
+                    ))}
+                    {positions.length === 0 && (
+                      <Tr>
+                        <Td colSpan={6} className="px-4 py-12 text-center text-slate-500">
+                          —
+                        </Td>
+                      </Tr>
+                    )}
+                  </TBody>
+                </Table>
+              </TableCard>
             )}
           </div>
         )}

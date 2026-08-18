@@ -2,20 +2,12 @@
 
 import { createVoiceAgentTemplate, recreateAllVoiceAgents, fetchGateConfig, fetchSystemHealth, type GateConfig, type SystemHealth } from "@/lib/platform-actions";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/ui/stat-card";
+import { StatusDot } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-
-function StatusDot({ ok }: { ok: boolean }) {
-  return (
-    <span
-      className={cn(
-        "inline-block h-2.5 w-2.5 rounded-full",
-        ok ? "bg-emerald-500" : "bg-rose-500",
-      )}
-    />
-  );
-}
 
 export function SystemView() {
   const t = useTranslations("system");
@@ -66,8 +58,7 @@ export function SystemView() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
-      <p className="mt-1 text-sm text-slate-500">{t("subtitle")}</p>
+      <PageHeader title={t("title")} description={t("subtitle")} />
 
       {!health ? (
         <p className="mt-8 text-sm text-slate-500">{t("loading")}</p>
@@ -78,31 +69,33 @@ export function SystemView() {
           <StatCard label={t("tenants")} value={String(health.tenant_count)} />
           <StatCard label={t("countryOverrides")} value={String(health.country_overrides)} />
           <StatCard label={t("settings")} value={String(health.settings_count)} />
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <Card className="p-5">
             <p className="text-xs font-medium uppercase text-slate-500">{t("database")}</p>
-            <p className="mt-2 flex items-center gap-2 text-lg font-semibold">
-              <StatusDot ok={health.database_ok} />
-              {health.database_ok ? t("ok") : t("down")}
-            </p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mt-2">
+              <StatusDot tone={health.database_ok ? "success" : "danger"}>
+                {health.database_ok ? t("ok") : t("down")}
+              </StatusDot>
+            </div>
+          </Card>
+          <Card className="p-5">
             <p className="text-xs font-medium uppercase text-slate-500">{t("redis")}</p>
-            <p className="mt-2 flex items-center gap-2 text-lg font-semibold">
-              <StatusDot ok={health.redis_ok} />
-              {health.redis_ok ? t("ok") : t("down")}
-            </p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mt-2">
+              <StatusDot tone={health.redis_ok ? "success" : "danger"}>
+                {health.redis_ok ? t("ok") : t("down")}
+              </StatusDot>
+            </div>
+          </Card>
+          <Card className="p-5">
             <p className="text-xs font-medium uppercase text-slate-500">{t("gate")}</p>
-            <p className="mt-2 text-lg font-semibold">
+            <p className="mt-2 text-lg font-semibold text-slate-900">
               {health.gate_configured ? t("configured") : t("missing")}
             </p>
             <p className="text-xs text-slate-400">{t("gateSource", { source: health.gate_source })}</p>
-          </div>
+          </Card>
         </div>
       )}
 
-      <div className="mt-8 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <Card className="mt-8 max-w-lg p-6">
         <h2 className="text-sm font-semibold text-slate-900">{t("voiceTemplateTitle")}</h2>
         <p className="mt-1 text-sm text-slate-500">{t("voiceTemplateHint")}</p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -128,7 +121,7 @@ export function SystemView() {
             })}
           </p>
         )}
-        {allErr && <p className="mt-1 text-xs text-rose-600">{allErr}</p>}
+        {allErr && <p className="mt-1 text-xs text-red-600">{allErr}</p>}
         {tmplId && (
           <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
             <p className="text-xs font-medium text-emerald-800">{t("voiceTemplateDone")}</p>
@@ -141,10 +134,10 @@ export function SystemView() {
             <p className="mt-2 text-xs text-slate-500">{t("voiceTemplateSetEnv")}</p>
           </div>
         )}
-        {tmplErr && <p className="mt-3 text-sm text-rose-600">{tmplErr}</p>}
-      </div>
+        {tmplErr && <p className="mt-3 text-sm text-red-600">{tmplErr}</p>}
+      </Card>
 
-      <div className="mt-8 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <Card className="mt-8 max-w-lg p-6">
         <h2 className="text-sm font-semibold text-slate-900">{t("gateEnvTitle")}</h2>
         <p className="mt-1 text-sm text-slate-500">{t("gateEnvHint")}</p>
         {gate && (
@@ -152,16 +145,7 @@ export function SystemView() {
             {t("currentSource", { source: gate.source })}
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-slate-900">{value}</p>
+      </Card>
     </div>
   );
 }

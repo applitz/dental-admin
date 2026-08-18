@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { sendMail, uploadAttachment } from "@/lib/api/platform-mail";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
+import { Textarea } from "@/components/ui/textarea";
 
 type Props = {
   mailboxId: string;
@@ -12,6 +17,8 @@ type Props = {
 };
 
 export function ComposeMailModal({ mailboxId, reply, onClose, onSent }: Props) {
+  const t = useTranslations("mail");
+  const tc = useTranslations("common");
   const [to, setTo] = useState(reply?.toAddress ?? "");
   const [subject, setSubject] = useState(reply?.subject ? `Re: ${reply.subject}` : "");
   const [body, setBody] = useState("");
@@ -39,58 +46,59 @@ export function ComposeMailModal({ mailboxId, reply, onClose, onSent }: Props) {
       onSent();
       onClose();
     } catch {
-      setError("Send failed.");
+      setError(t("sendFailed"));
     } finally {
       setBusy(false);
     }
   };
 
-  if (typeof document === "undefined") return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="max-h-[calc(100dvh-2rem)] w-[32rem] overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
-        <h3 className="mb-3 text-sm font-semibold">{reply ? "Reply" : "Compose"}</h3>
-        <input
-          className="mb-2 w-full rounded border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-50"
-          placeholder="To"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          disabled={!!reply}
-        />
-        <input
-          className="mb-2 w-full rounded border border-slate-300 px-2 py-1 text-sm"
-          placeholder="Subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-        />
-        <textarea
-          className="mb-2 h-40 w-full rounded border border-slate-300 px-2 py-1 text-sm"
-          placeholder="Message"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-        />
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={reply ? t("reply") : t("compose")}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {tc("cancel")}
+          </Button>
+          <Button onClick={submit} disabled={busy || !to || !body}>
+            {t("send")}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <Field label={t("to")}>
+          <Input
+            placeholder={t("toPlaceholder")}
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            disabled={!!reply}
+          />
+        </Field>
+        <Field label={t("subjectPlaceholder")}>
+          <Input
+            placeholder={t("subjectPlaceholder")}
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+          />
+        </Field>
+        <Field label={t("messagePlaceholder")} error={error ?? undefined}>
+          <Textarea
+            className="min-h-[10rem]"
+            placeholder={t("messagePlaceholder")}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+          />
+        </Field>
         <input
           type="file"
           multiple
-          className="mb-2 text-xs"
+          className="block w-full text-xs text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
           onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
         />
-        {error && <p className="mb-2 text-xs text-rose-600">{error}</p>}
-        <div className="flex justify-end gap-2">
-          <button className="rounded px-3 py-1 text-sm" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            className="rounded bg-admin-600 px-3 py-1 text-sm text-white disabled:opacity-50"
-            onClick={submit}
-            disabled={busy || !to || !body}
-          >
-            Send
-          </button>
-        </div>
       </div>
-    </div>,
-    document.body,
+    </Modal>
   );
 }

@@ -1,12 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { createMailbox } from "@/lib/api/platform-mail";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 
 type Props = { onClose: () => void; onCreated: () => void };
 
 export function AddAddressModal({ onClose, onCreated }: Props) {
+  const t = useTranslations("mail");
+  const tc = useTranslations("common");
   const [localPart, setLocalPart] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -20,48 +26,45 @@ export function AddAddressModal({ onClose, onCreated }: Props) {
       onCreated();
       onClose();
     } catch {
-      setError("Could not create address (already taken or invalid).");
+      setError(t("createFailed"));
     } finally {
       setBusy(false);
     }
   };
 
-  if (typeof document === "undefined") return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="max-h-[calc(100dvh-2rem)] w-96 overflow-y-auto rounded-lg bg-white p-4 shadow-lg">
-        <h3 className="mb-3 text-sm font-semibold">Add mailbox address</h3>
-        <div className="flex items-center gap-1">
-          <input
-            className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm"
-            placeholder="info"
-            value={localPart}
-            onChange={(e) => setLocalPart(e.target.value)}
-          />
-          <span className="text-sm text-slate-500">@vodett.ai</span>
-        </div>
-        <input
-          className="mt-2 w-full rounded border border-slate-300 px-2 py-1 text-sm"
-          placeholder="Display name (optional)"
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={t("addAddressTitle")}
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
+            {tc("cancel")}
+          </Button>
+          <Button onClick={submit} disabled={busy || !localPart}>
+            {t("create")}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <Field label={t("addAddressTitle")} error={error ?? undefined}>
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder={t("localPartPlaceholder")}
+              value={localPart}
+              onChange={(e) => setLocalPart(e.target.value)}
+            />
+            <span className="shrink-0 text-sm text-slate-500">@vodett.ai</span>
+          </div>
+        </Field>
+        <Input
+          placeholder={t("displayNamePlaceholder")}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
         />
-        {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
-        <div className="mt-4 flex justify-end gap-2">
-          <button className="rounded px-3 py-1 text-sm" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            className="rounded bg-admin-600 px-3 py-1 text-sm text-white disabled:opacity-50"
-            onClick={submit}
-            disabled={busy || !localPart}
-          >
-            Create
-          </button>
-        </div>
       </div>
-    </div>,
-    document.body,
+    </Modal>
   );
 }

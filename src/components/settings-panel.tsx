@@ -2,7 +2,10 @@
 
 import { patchSettings, type PlatformSettingItem } from "@/lib/platform-api";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Tabs } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
+import { Card } from "@/components/ui/card";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -82,34 +85,22 @@ export function SettingsPanel({ items, groups, onSaved }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-1 border-b border-slate-200">
-        {grouped.map(([group]) => {
-          const isActive = group === activeGroup;
-          return (
-            <button
-              key={group}
-              type="button"
-              onClick={() => setActiveGroup(group)}
-              className={cn(
-                "-mb-px rounded-t-lg border-b-2 px-4 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "border-admin-600 text-admin-700"
-                  : "border-transparent text-slate-500 hover:text-slate-800",
-              )}
-            >
-              {t(`groups.${group}` as "groups.auth")}
-            </button>
-          );
-        })}
-      </div>
+      <Tabs
+        tabs={grouped.map(([group]) => ({
+          id: group,
+          label: t(`groups.${group}` as "groups.auth"),
+        }))}
+        active={activeGroup ?? ""}
+        onChange={setActiveGroup}
+      />
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <Card className="p-5">
         <div className="space-y-5">
           {activeItems.map((item) => (
             <SettingField key={item.key} item={item} value={draft[item.key]} onChange={setValue} />
           ))}
         </div>
-      </section>
+      </Card>
 
       <div className="flex items-center gap-3">
         <Button onClick={() => void onSubmit()} disabled={saving}>
@@ -134,54 +125,48 @@ function SettingField({
   const id = `setting-${item.key}`;
 
   return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-800">
-        {item.label}
-      </label>
-      {item.description && <p className="mt-0.5 text-xs text-slate-500">{item.description}</p>}
-      <div className="mt-2">
-        {item.value_type === "bool" ? (
-          <input
-            id={id}
-            type="checkbox"
-            className="h-4 w-4 rounded border-slate-300"
-            checked={Boolean(value)}
-            onChange={(e) => onChange(item.key, e.target.checked)}
-          />
-        ) : item.value_type === "string_list" ? (
-          <input
-            id={id}
-            type="text"
-            className="w-full max-w-xl rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            value={Array.isArray(value) ? value.join(", ") : String(value ?? "")}
-            onChange={(e) =>
-              onChange(
-                item.key,
-                e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-              )
-            }
-          />
-        ) : item.value_type === "int" || item.value_type === "float" ? (
-          <input
-            id={id}
-            type="number"
-            step={item.value_type === "float" ? "0.1" : "1"}
-            className="w-full max-w-xs rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            value={String(value ?? "")}
-            onChange={(e) =>
-              onChange(item.key, item.value_type === "float" ? parseFloat(e.target.value) : parseInt(e.target.value, 10))
-            }
-          />
-        ) : (
-          <input
-            id={id}
-            type="text"
-            className="w-full max-w-xl rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            value={String(value ?? "")}
-            onChange={(e) => onChange(item.key, e.target.value)}
-          />
-        )}
-      </div>
-    </div>
+    <Field label={item.label} hint={item.description ?? undefined}>
+      {item.value_type === "bool" ? (
+        <input
+          id={id}
+          type="checkbox"
+          className="h-4 w-4 rounded border-slate-300 accent-dental-600"
+          checked={Boolean(value)}
+          onChange={(e) => onChange(item.key, e.target.checked)}
+        />
+      ) : item.value_type === "string_list" ? (
+        <Input
+          id={id}
+          type="text"
+          className="max-w-xl"
+          value={Array.isArray(value) ? value.join(", ") : String(value ?? "")}
+          onChange={(e) =>
+            onChange(
+              item.key,
+              e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+            )
+          }
+        />
+      ) : item.value_type === "int" || item.value_type === "float" ? (
+        <Input
+          id={id}
+          type="number"
+          step={item.value_type === "float" ? "0.1" : "1"}
+          className="max-w-xs"
+          value={String(value ?? "")}
+          onChange={(e) =>
+            onChange(item.key, item.value_type === "float" ? parseFloat(e.target.value) : parseInt(e.target.value, 10))
+          }
+        />
+      ) : (
+        <Input
+          id={id}
+          type="text"
+          className="max-w-xl"
+          value={String(value ?? "")}
+          onChange={(e) => onChange(item.key, e.target.value)}
+        />
+      )}
+    </Field>
   );
 }

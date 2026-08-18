@@ -5,9 +5,39 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+  --scrollbar-size: 6px;
+  --scrollbar-thumb: rgb(148 163 184 / 0.32);
+  --scrollbar-thumb-hover: rgb(148 163 184 / 0.52);
+}
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  @apply bg-slate-100 text-slate-900 antialiased;
+  font-feature-settings: "rlig" 1, "calt" 1;
 }

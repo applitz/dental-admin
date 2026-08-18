@@ -5,7 +5,8 @@
     "signOut": "Abmelden",
     "save": "Speichern",
     "cancel": "Abbrechen",
-    "comingSoon": "Kommt in Phase {phase}"
+    "comingSoon": "Kommt in Phase {phase}",
+    "confirm": "Bestätigen"
   },
   "nav": {
     "dashboard": "Übersicht",
@@ -480,5 +481,32 @@
     "shareCategory": "Selbstbehalt-Kategorie",
     "noRates": "Keine Sätze gesetzt — der Patient zahlt nichts, bis Sie sie festlegen.",
     "loadError": "Konnte nicht laden. Erneut versuchen."
+  },
+  "mail": {
+    "inbox": "Posteingang",
+    "compose": "Verfassen",
+    "reply": "Antworten",
+    "delete": "Löschen",
+    "allMailboxes": "Alle Postfächer",
+    "addAddress": "Adresse hinzufügen",
+    "addAddressTitle": "Postfachadresse hinzufügen",
+    "localPartPlaceholder": "info",
+    "displayNamePlaceholder": "Anzeigename (optional)",
+    "create": "Erstellen",
+    "noSubject": "(kein Betreff)",
+    "noMessages": "Keine Nachrichten",
+    "selectMessage": "Nachricht auswählen",
+    "to": "An",
+    "from": "Von",
+    "toPlaceholder": "An",
+    "subjectPlaceholder": "Betreff",
+    "messagePlaceholder": "Nachricht",
+    "send": "Senden",
+    "sendFailed": "Senden fehlgeschlagen.",
+    "createFailed": "Adresse konnte nicht erstellt werden (bereits vergeben oder ungültig).",
+    "failed": "fehlgeschlagen",
+    "deleteConfirmTitle": "Konversation löschen",
+    "deleteConfirm": "Diese Konversation löschen? Dies kann nicht rückgängig gemacht werden.",
+    "deleteConversation": "Konversation löschen"
   }
 }

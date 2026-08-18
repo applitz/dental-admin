@@ -5,7 +5,8 @@
     "signOut": "Sign out",
     "save": "Save",
     "cancel": "Cancel",
-    "comingSoon": "Coming in Phase {phase}"
+    "comingSoon": "Coming in Phase {phase}",
+    "confirm": "Confirm"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -480,5 +481,32 @@
     "shareCategory": "Share category",
     "noRates": "No rates set — the patient pays nothing until you set them.",
     "loadError": "Couldn't load. Try again."
+  },
+  "mail": {
+    "inbox": "Inbox",
+    "compose": "Compose",
+    "reply": "Reply",
+    "delete": "Delete",
+    "allMailboxes": "All mailboxes",
+    "addAddress": "Add address",
+    "addAddressTitle": "Add mailbox address",
+    "localPartPlaceholder": "info",
+    "displayNamePlaceholder": "Display name (optional)",
+    "create": "Create",
+    "noSubject": "(no subject)",
+    "noMessages": "No messages",
+    "selectMessage": "Select a message",
+    "to": "To",
+    "from": "From",
+    "toPlaceholder": "To",
+    "subjectPlaceholder": "Subject",
+    "messagePlaceholder": "Message",
+    "send": "Send",
+    "sendFailed": "Send failed.",
+    "createFailed": "Could not create address (already taken or invalid).",
+    "failed": "failed",
+    "deleteConfirmTitle": "Delete conversation",
+    "deleteConfirm": "Delete this conversation? This cannot be undone.",
+    "deleteConversation": "Delete conversation"
   }
 }

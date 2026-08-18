@@ -23,7 +23,15 @@ import {
   type UnassignedNumber,
 } from "@/lib/platform-actions";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Tabs } from "@/components/ui/tabs";
+import { TableCard, Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Field } from "@/components/ui/field";
+import { useConfirm } from "@/components/ui/confirm-provider";
+import { useToast } from "@/components/ui/toast";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -38,6 +46,8 @@ type Props = {
 export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   const t = useTranslations("tenants");
   const locale = useLocale();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [tab, setTab] = useState<Tab>("overview");
   const [busy, setBusy] = useState(false);
   const [users, setUsers] = useState<TenantUser[]>([]);
@@ -75,7 +85,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
       onUpdated(updated);
       setActionMsg(t("subscription.assignDone"));
     } catch {
-      window.alert(t("subscription.assignError"));
+      toast.error(t("subscription.assignError"));
     } finally {
       setAssigning(false);
     }
@@ -117,12 +127,19 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   }, [tab, detail.id, patientQ, catalog.length]);
 
   async function setActive(is_active: boolean) {
-    if (!window.confirm(is_active ? t("confirmReactivate") : t("confirmSuspend"))) return;
+    if (
+      !(await confirm({
+        title: is_active ? t("reactivate") : t("suspend"),
+        message: is_active ? t("confirmReactivate") : t("confirmSuspend"),
+        tone: is_active ? "default" : "destructive",
+      }))
+    )
+      return;
     setBusy(true);
     try {
       onUpdated(await patchTenant(detail.id, { is_active }));
     } catch {
-      window.alert(t("statusError"));
+      toast.error(t("statusError"));
     } finally {
       setBusy(false);
     }
@@ -187,7 +204,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   }
 
   async function clearNumber(practiceId: string) {
-    if (!window.confirm(t("comms.clearConfirm"))) return;
+    if (!(await confirm({ title: t("comms.unassign"), message: t("comms.clearConfirm"), tone: "destructive" }))) return;
     setBusy(true);
     setActionMsg(null);
     try {
@@ -203,7 +220,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   }
 
   async function recreateAgent() {
-    if (!window.confirm(t("comms.recreateConfirm"))) return;
+    if (!(await confirm({ title: t("comms.recreate"), message: t("comms.recreateConfirm"), tone: "destructive" }))) return;
     setBusy(true);
     setActionMsg(null);
     try {
@@ -218,7 +235,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
 
   async function deleteTenantAction() {
     if (deleteConfirm.trim() !== detail.name) return;
-    if (!window.confirm(t("delete.finalConfirm", { name: detail.name }))) return;
+    if (!(await confirm({ title: t("delete.button"), message: t("delete.finalConfirm", { name: detail.name }), tone: "destructive" }))) return;
     setBusy(true);
     setActionMsg(null);
     try {
@@ -245,7 +262,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   }
 
   async function openAsTenant() {
-    if (!window.confirm(t("confirmImpersonate"))) return;
+    if (!(await confirm({ title: t("actionImpersonate"), message: t("confirmImpersonate") }))) return;
     setBusy(true);
     try {
       const res = await impersonateTenant(detail.id);
@@ -258,7 +275,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
       }).toString();
       window.open(`${base.replace(/\/$/, "")}/auth/callback#${hash}`, "_blank", "noopener");
     } catch {
-      window.alert(t("impersonateError"));
+      toast.error(t("impersonateError"));
     } finally {
       setBusy(false);
     }
@@ -277,13 +294,13 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
   }
 
   async function cancelSubscription() {
-    if (!window.confirm(t("subscription.confirmCancel"))) return;
+    if (!(await confirm({ title: t("subscription.cancel"), message: t("subscription.confirmCancel"), tone: "destructive" }))) return;
     setBusy(true);
     try {
       await cancelTenantSubscription(detail.id);
       onUpdated(await getTenant(detail.id));
     } catch {
-      window.alert(t("subscription.cancelError"));
+      toast.error(t("subscription.cancelError"));
     } finally {
       setBusy(false);
     }
@@ -298,17 +315,12 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
           <h1 className="text-2xl font-semibold">{detail.name}</h1>
           <p className="mt-1 text-sm text-slate-500">{detail.slug}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <span
-            className={cn(
-              "rounded-full px-3 py-1 text-xs font-medium",
-              detail.is_active ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800",
-            )}
-          >
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge tone={detail.is_active ? "success" : "danger"}>
             {detail.is_active ? t("active") : t("suspended")}
-          </span>
+          </Badge>
           {detail.is_active ? (
-            <Button variant="secondary" size="sm" disabled={busy} onClick={() => void setActive(false)}>
+            <Button variant="destructive" size="sm" disabled={busy} onClick={() => void setActive(false)}>
               {t("suspend")}
             </Button>
           ) : (
@@ -319,21 +331,12 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-2 border-b border-slate-200 pb-2">
-        {tabs.map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setTab(id)}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-sm font-medium",
-              tab === id ? "bg-admin-100 text-admin-800" : "text-slate-500 hover:bg-slate-100",
-            )}
-          >
-            {t(`tab.${id}`)}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        className="mt-6"
+        tabs={tabs.map((id) => ({ id, label: t(`tab.${id}`) }))}
+        active={tab}
+        onChange={(id) => setTab(id as Tab)}
+      />
 
       {tab === "overview" && (
         <>
@@ -347,11 +350,11 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
             />
           </div>
 
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <Card className="mt-6 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-sm font-semibold text-slate-700">{t("subscription.title")}</h2>
               {detail.subscription && (detail.subscription.status === "active" || detail.subscription.status === "pending") && (
-                <Button variant="secondary" size="sm" disabled={busy} onClick={() => void cancelSubscription()}>
+                <Button variant="destructive" size="sm" disabled={busy} onClick={() => void cancelSubscription()}>
                   {t("subscription.cancel")}
                 </Button>
               )}
@@ -362,14 +365,9 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                 <InfoCard
                   label={t("subscription.status")}
                   valueNode={
-                    <span
-                      className={cn(
-                        "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        subscriptionStatusClass(detail.subscription.status),
-                      )}
-                    >
+                    <Badge tone={subscriptionStatusTone(detail.subscription.status)}>
                       {subscriptionStatusLabel(t, detail.subscription.status)}
-                    </span>
+                    </Badge>
                   }
                 />
                 <InfoCard
@@ -394,30 +392,23 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                 {t("subscription.assignTitle")}
               </p>
               <div className="mt-2 flex flex-wrap items-end gap-3">
-                <label className="text-sm">
-                  <span className="block text-slate-500">{t("subscription.assignPlan")}</span>
-                  <select
-                    className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                    value={assignSlug}
-                    onChange={(e) => setAssignSlug(e.target.value)}
-                  >
+                <Field label={t("subscription.assignPlan")} className="w-56">
+                  <Select value={assignSlug} onChange={(e) => setAssignSlug(e.target.value)}>
                     <option value="">{t("subscription.assignSelect")}</option>
                     {plans.map((p) => (
                       <option key={p.slug} value={p.slug}>
                         {p.name}
                       </option>
                     ))}
-                  </select>
-                </label>
-                <label className="text-sm">
-                  <span className="block text-slate-500">{t("subscription.assignUntil")}</span>
-                  <input
+                  </Select>
+                </Field>
+                <Field label={t("subscription.assignUntil")} className="w-44">
+                  <Input
                     type="date"
-                    className="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
                     value={assignUntil}
                     onChange={(e) => setAssignUntil(e.target.value)}
                   />
-                </label>
+                </Field>
                 <Button
                   size="sm"
                   disabled={!assignSlug || assigning}
@@ -428,9 +419,9 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
               </div>
               <p className="mt-1 text-xs text-slate-400">{t("subscription.assignHint")}</p>
             </div>
-          </div>
+          </Card>
 
-          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <Card className="mt-6 p-5">
             <h2 className="text-sm font-semibold text-slate-700">{t("comms.title")}</h2>
             <div className="mt-4 space-y-4">
               {detail.practices.map((p) => (
@@ -444,9 +435,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                           <span className="flex items-center gap-2">
                             <span>{p.comms_phone}</span>
                             {p.comms_number_status === "pending_review" && (
-                              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                                {t("comms.inReview")}
-                              </span>
+                              <Badge tone="warn">{t("comms.inReview")}</Badge>
                             )}
                           </span>
                         ) : (
@@ -471,11 +460,12 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                     <p className="mb-2 text-xs font-medium text-slate-500">{t("comms.assignTitle")}</p>
                     <div className="flex flex-wrap items-center gap-2">
                       {numberProvider === "telnyx" ? (
-                        <select
+                        <Select
                           value={selectedNumberId}
                           onChange={(e) => setSelectedNumberId(e.target.value)}
                           disabled={unassignedLoading}
-                          className="h-9 flex-1 rounded-lg border border-slate-300 px-2 text-sm"
+                          size="sm"
+                          wrapperClassName="flex-1"
                         >
                           <option value="">
                             {unassignedLoading
@@ -489,27 +479,28 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                               {n.phone_e164}
                             </option>
                           ))}
-                        </select>
+                        </Select>
                       ) : (
-                        <input
+                        <Input
                           value={numberInput}
                           onChange={(e) => setNumberInput(e.target.value)}
                           placeholder="+49 30 1234567"
-                          className="h-9 flex-1 rounded-lg border border-slate-300 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                          className="h-9 flex-1"
                         />
                       )}
-                      <select
+                      <Select
                         value={numberProvider}
                         onChange={(e) => {
                           const next = e.target.value as "external" | "telnyx";
                           setNumberProvider(next);
                           if (next === "telnyx") void loadUnassigned();
                         }}
-                        className="h-9 rounded-lg border border-slate-300 px-2 text-sm"
+                        size="sm"
+                        wrapperClassName="w-36"
                       >
                         <option value="external">{t("comms.providerExternal")}</option>
                         <option value="telnyx">Telnyx</option>
-                      </select>
+                      </Select>
                       <Button
                         size="sm"
                         disabled={
@@ -521,7 +512,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                         {t("comms.assign")}
                       </Button>
                       {p.comms_phone && (
-                        <Button variant="secondary" size="sm" disabled={busy} onClick={() => void clearNumber(p.id)}>
+                        <Button variant="destructive" size="sm" disabled={busy} onClick={() => void clearNumber(p.id)}>
                           {t("comms.unassign")}
                         </Button>
                       )}
@@ -546,69 +537,73 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
               ))}
               {actionMsg && <p className="text-xs text-slate-500">{actionMsg}</p>}
             </div>
-          </div>
+          </Card>
         </>
       )}
 
       {tab === "users" && (
-        <table className="mt-6 w-full rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2 text-left">{t("colName")}</th>
-              <th className="px-4 py-2 text-left">Email</th>
-              <th className="px-4 py-2 text-left">Type</th>
-              <th className="px-4 py-2 text-left">{t("colStatus")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td className="px-4 py-2">
-                  {u.first_name} {u.last_name}
-                  {u.is_clinic_owner && (
-                    <span className="ml-2 text-xs text-admin-600">{t("owner")}</span>
-                  )}
-                </td>
-                <td className="px-4 py-2">{u.email}</td>
-                <td className="px-4 py-2">{u.user_type}</td>
-                <td className="px-4 py-2">{u.is_active ? t("active") : t("suspended")}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <TableCard className="mt-6">
+          <Table>
+            <THead>
+              <Tr>
+                <Th>{t("colName")}</Th>
+                <Th>Email</Th>
+                <Th>Type</Th>
+                <Th>{t("colStatus")}</Th>
+              </Tr>
+            </THead>
+            <TBody>
+              {users.map((u) => (
+                <Tr key={u.id}>
+                  <Td>
+                    {u.first_name} {u.last_name}
+                    {u.is_clinic_owner && (
+                      <span className="ml-2 text-xs text-dental-600">{t("owner")}</span>
+                    )}
+                  </Td>
+                  <Td>{u.email}</Td>
+                  <Td>{u.user_type}</Td>
+                  <Td>{u.is_active ? t("active") : t("suspended")}</Td>
+                </Tr>
+              ))}
+            </TBody>
+          </Table>
+        </TableCard>
       )}
 
       {tab === "patients" && (
         <div className="mt-6">
-          <input
+          <Input
             value={patientQ}
             onChange={(e) => setPatientQ(e.target.value)}
             placeholder={t("patientSearch")}
-            className="mb-4 w-full max-w-md rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            className="mb-4 w-full max-w-md"
           />
           <p className="mb-2 text-xs text-slate-400">{t("patientLimit", { total: patientTotal })}</p>
-          <table className="w-full rounded-xl border border-slate-200 bg-white text-sm shadow-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-2 text-left">#</th>
-                <th className="px-4 py-2 text-left">{t("colName")}</th>
-                <th className="px-4 py-2 text-left">DOB</th>
-                <th className="px-4 py-2 text-left">Contact</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {patients.map((p) => (
-                <tr key={p.id}>
-                  <td className="px-4 py-2">{p.patient_number}</td>
-                  <td className="px-4 py-2">
-                    {p.first_name} {p.last_name}
-                  </td>
-                  <td className="px-4 py-2">{p.date_of_birth ?? "—"}</td>
-                  <td className="px-4 py-2">{p.email ?? p.mobile ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <TableCard>
+            <Table>
+              <THead>
+                <Tr>
+                  <Th>#</Th>
+                  <Th>{t("colName")}</Th>
+                  <Th>DOB</Th>
+                  <Th>Contact</Th>
+                </Tr>
+              </THead>
+              <TBody>
+                {patients.map((p) => (
+                  <Tr key={p.id}>
+                    <Td>{p.patient_number}</Td>
+                    <Td>
+                      {p.first_name} {p.last_name}
+                    </Td>
+                    <Td>{p.date_of_birth ?? "—"}</Td>
+                    <Td>{p.email ?? p.mobile ?? "—"}</Td>
+                  </Tr>
+                ))}
+              </TBody>
+            </Table>
+          </TableCard>
         </div>
       )}
 
@@ -670,20 +665,20 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
               {t("delete.typeName")}{" "}
               <span className="font-mono font-semibold">{detail.name}</span>
             </p>
-            <input
+            <Input
               value={deleteConfirm}
               onChange={(e) => setDeleteConfirm(e.target.value)}
               placeholder={detail.name}
-              className="mt-1.5 w-full rounded-lg border border-red-300 px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+              className="mt-1.5 border-red-300 focus-visible:ring-red-600"
             />
-            <button
-              type="button"
+            <Button
+              variant="destructive"
               disabled={busy || deleteConfirm.trim() !== detail.name}
               onClick={() => void deleteTenantAction()}
-              className="mt-3 w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+              className="mt-3 w-full"
             >
               {t("delete.button")}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -715,19 +710,18 @@ function subscriptionStatusLabel(t: (key: string) => string, status: string): st
   return known ? t(`subscription.statusLabel.${known}`) : status;
 }
 
-function subscriptionStatusClass(status: string): string {
+function subscriptionStatusTone(status: string): "success" | "warn" | "muted" {
   switch (status) {
     case "active":
-      return "bg-emerald-100 text-emerald-800";
+      return "success";
     case "pending":
-      return "bg-amber-100 text-amber-800";
     case "past_due":
-      return "bg-orange-100 text-orange-800";
+      return "warn";
     case "canceled":
     case "expired":
-      return "bg-slate-200 text-slate-600";
+      return "muted";
     default:
-      return "bg-slate-100 text-slate-600";
+      return "muted";
   }
 }
 

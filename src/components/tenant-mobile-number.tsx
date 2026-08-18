@@ -129,15 +129,17 @@ export function TenantMobileNumber({ tenantId }: { tenantId: string }) {
                 className="flex items-center justify-between gap-2 text-xs text-slate-700"
               >
                 <span className="truncate">{d.filename}</span>
-                <button
+                <Button
                   type="button"
-                  className="shrink-0 text-slate-600 underline hover:text-slate-900"
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0"
                   onClick={() =>
                     void downloadTenantRegulatoryDoc(tenantId, d.requirement_id, d.filename)
                   }
                 >
                   Download
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -164,14 +166,16 @@ function DetailRow({
       <span>
         <span className="text-slate-400">{label}:</span> {value}
       </span>
-      <button
+      <Button
         type="button"
-        className="shrink-0 text-slate-500 hover:text-slate-800"
+        variant="ghost"
+        size="sm"
+        className="shrink-0"
         onClick={() => onCopy(value, label)}
         title={`Copy ${label}`}
       >
         Copy
-      </button>
+      </Button>
     </div>
   );
 }
