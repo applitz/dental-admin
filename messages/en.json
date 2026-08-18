@@ -198,6 +198,11 @@
     "voiceTemplateUpdated": "Re-applied the latest spec to your existing master template (same id — this is expected, there is only one master).",
     "voiceTemplateSetEnv": "Set this as voice_agent_template_id in the API env, then redeploy, so provisioning clones it.",
     "voiceTemplateError": "Couldn't create the template (is Telnyx configured on the API?).",
+    "voiceRecreateAll": "Regenerate all clinics' agents",
+    "voiceRecreateAllBusy": "Regenerating…",
+    "voiceRecreateAllHint": "After updating the master template, re-clone every clinic's AI agent so they all pick up the new voice/instructions. Runs one clinic at a time.",
+    "voiceRecreateAllDone": "Regenerated {recreated} of {total} clinic agents ({failed} failed).",
+    "voiceRecreateAllError": "Couldn't regenerate the clinic agents (is Telnyx configured on the API?).",
     "gateEnvTitle": "Admin access key",
     "gateEnvHint": "Configured via PLATFORM_ADMIN_GATE_SECRET on the API server. Update the environment variable and restart the API to change it — nothing is stored in the database for the admin console.",
     "currentSource": "Active source: {source}"

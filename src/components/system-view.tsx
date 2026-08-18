@@ -1,6 +1,6 @@
 "use client";
 
-import { createVoiceAgentTemplate, fetchGateConfig, fetchSystemHealth, type GateConfig, type SystemHealth } from "@/lib/platform-actions";
+import { createVoiceAgentTemplate, recreateAllVoiceAgents, fetchGateConfig, fetchSystemHealth, type GateConfig, type SystemHealth } from "@/lib/platform-actions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -25,6 +25,9 @@ export function SystemView() {
   const [tmplId, setTmplId] = useState<string | null>(null);
   const [tmplAction, setTmplAction] = useState<"created" | "updated" | null>(null);
   const [tmplErr, setTmplErr] = useState<string | null>(null);
+  const [allBusy, setAllBusy] = useState(false);
+  const [allResult, setAllResult] = useState<{ total: number; recreated: number; failed: number } | null>(null);
+  const [allErr, setAllErr] = useState<string | null>(null);
 
   async function createTemplate() {
     setTmplBusy(true);
@@ -37,6 +40,20 @@ export function SystemView() {
       setTmplErr(t("voiceTemplateError"));
     } finally {
       setTmplBusy(false);
+    }
+  }
+
+  async function recreateAll() {
+    setAllBusy(true);
+    setAllErr(null);
+    setAllResult(null);
+    try {
+      const res = await recreateAllVoiceAgents();
+      setAllResult(res.result);
+    } catch {
+      setAllErr(t("voiceRecreateAllError"));
+    } finally {
+      setAllBusy(false);
     }
   }
 
@@ -88,9 +105,30 @@ export function SystemView() {
       <div className="mt-8 max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">{t("voiceTemplateTitle")}</h2>
         <p className="mt-1 text-sm text-slate-500">{t("voiceTemplateHint")}</p>
-        <Button className="mt-4" size="sm" disabled={tmplBusy} onClick={() => void createTemplate()}>
-          {tmplBusy ? t("voiceTemplateBusy") : t("voiceTemplateCreate")}
-        </Button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button size="sm" disabled={tmplBusy} onClick={() => void createTemplate()}>
+            {tmplBusy ? t("voiceTemplateBusy") : t("voiceTemplateCreate")}
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={allBusy}
+            onClick={() => void recreateAll()}
+          >
+            {allBusy ? t("voiceRecreateAllBusy") : t("voiceRecreateAll")}
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-slate-500">{t("voiceRecreateAllHint")}</p>
+        {allResult && (
+          <p className="mt-2 text-xs text-emerald-700">
+            {t("voiceRecreateAllDone", {
+              recreated: allResult.recreated,
+              total: allResult.total,
+              failed: allResult.failed,
+            })}
+          </p>
+        )}
+        {allErr && <p className="mt-1 text-xs text-rose-600">{allErr}</p>}
         {tmplId && (
           <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
             <p className="text-xs font-medium text-emerald-800">{t("voiceTemplateDone")}</p>

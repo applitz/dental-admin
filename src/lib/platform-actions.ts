@@ -233,6 +233,14 @@ export async function createVoiceAgentTemplate(
   });
 }
 
+/** Recreate EVERY tenant's AI voice agent so they re-clone the (just-updated)
+ *  master template. Runs per tenant on the server; returns a summary. */
+export async function recreateAllVoiceAgents(): Promise<{
+  result: { total: number; recreated: number; failed: number };
+}> {
+  return apiFetch(`/api/v1/platform/voice-agent/recreate-all`, { method: "POST" });
+}
+
 export type UnassignedNumber = { number_id: string; phone_e164: string };
 
 /** Telnyx numbers owned on the account but not assigned to any tenant — the
