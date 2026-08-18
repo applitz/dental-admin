@@ -99,19 +99,28 @@ export function InsuranceView() {
       setRateRows(EMPTY_RATE_ROWS);
       return;
     }
+    let cancelled = false;
     setLoadingRates(true);
     setRatesError(false);
     setSaved(false);
     void getShareRules(selectedInsurerId)
       .then((rules) => {
+        if (cancelled) return;
         const next = { ...EMPTY_RATE_ROWS };
         for (const rule of rules) {
           next[rule.share_category] = { kind: rule.kind, value: rule.value };
         }
         setRateRows(next);
       })
-      .catch(() => setRatesError(true))
-      .finally(() => setLoadingRates(false));
+      .catch(() => {
+        if (!cancelled) setRatesError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingRates(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedInsurerId]);
 
   const saveRates = async () => {
@@ -156,11 +165,21 @@ export function InsuranceView() {
       setPositions([]);
       return;
     }
+    let cancelled = false;
     setLoadingPositions(true);
     void listPositions(selectedEditionId)
-      .then(setPositions)
-      .catch(() => setPositions([]))
-      .finally(() => setLoadingPositions(false));
+      .then((rows) => {
+        if (!cancelled) setPositions(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setPositions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPositions(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedEditionId]);
 
   const selectedInsurer = insurers.find((i) => i.id === selectedInsurerId) ?? null;
