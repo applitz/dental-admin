@@ -1,6 +1,14 @@
 import { apiFetch } from "./api";
 
-export type InsurerAdmin = { id: string; code: string; name: string; is_active: boolean };
+export type InsurerAdmin = {
+  id: string;
+  code: string;
+  name: string;
+  is_active: boolean;
+  traeger_vstrl: string | null;
+  traeger_bundesland: string | null;
+};
+export type DvpSettings = { repro: string | null; versi: string | null; versd: string; test_mode: boolean };
 export type ShareRule = { share_category: "prosthetics" | "ortho"; kind: "percent" | "fixed"; value: string };
 export type TariffEdition = { id: string; country: string; contract: "ZAE" | "KFO"; valid_from: string; label: string; is_active: boolean };
 export type TariffPositionAdmin = {
@@ -12,11 +20,31 @@ export type TariffPositionAdmin = {
 export function listInsurers(): Promise<InsurerAdmin[]> {
   return apiFetch("/api/v1/platform/insurance/insurers");
 }
-export function createInsurer(body: { code: string; name: string; is_active?: boolean }): Promise<InsurerAdmin> {
+export function createInsurer(body: {
+  code: string;
+  name: string;
+  is_active?: boolean;
+  traeger_vstrl?: string | null;
+  traeger_bundesland?: string | null;
+}): Promise<InsurerAdmin> {
   return apiFetch("/api/v1/platform/insurance/insurers", { method: "POST", body: JSON.stringify(body) });
 }
-export function updateInsurer(id: string, body: { name?: string; is_active?: boolean }): Promise<InsurerAdmin> {
+export function updateInsurer(
+  id: string,
+  body: {
+    name?: string;
+    is_active?: boolean;
+    traeger_vstrl?: string | null;
+    traeger_bundesland?: string | null;
+  },
+): Promise<InsurerAdmin> {
   return apiFetch(`/api/v1/platform/insurance/insurers/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+}
+export function getDvpSettings(): Promise<DvpSettings> {
+  return apiFetch("/api/v1/platform/insurance/dvp-settings");
+}
+export function updateDvpSettings(body: Partial<DvpSettings>): Promise<DvpSettings> {
+  return apiFetch("/api/v1/platform/insurance/dvp-settings", { method: "PUT", body: JSON.stringify(body) });
 }
 export function getShareRules(insurerId: string): Promise<ShareRule[]> {
   return apiFetch(`/api/v1/platform/insurance/insurers/${insurerId}/share-rules`);

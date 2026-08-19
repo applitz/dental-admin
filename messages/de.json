@@ -480,7 +480,14 @@
     "amount": "Betrag",
     "shareCategory": "Selbstbehalt-Kategorie",
     "noRates": "Keine Sätze gesetzt — der Patient zahlt nichts, bis Sie sie festlegen.",
-    "loadError": "Konnte nicht laden. Erneut versuchen."
+    "loadError": "Konnte nicht laden. Erneut versuchen.",
+    "dvpSettings": "DVP / Software-Registrierung",
+    "repro": "Registrier-Nr.",
+    "versi": "Versions-Nr.",
+    "versd": "Datenbestand-Version",
+    "testMode": "Testmodus",
+    "traegerVstrl": "Träger-Code",
+    "traegerBundesland": "Bundesland"
   },
   "mail": {
     "inbox": "Posteingang",

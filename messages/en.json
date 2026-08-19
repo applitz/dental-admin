@@ -480,7 +480,14 @@
     "amount": "Amount",
     "shareCategory": "Share category",
     "noRates": "No rates set — the patient pays nothing until you set them.",
-    "loadError": "Couldn't load. Try again."
+    "loadError": "Couldn't load. Try again.",
+    "dvpSettings": "DVP / software registration",
+    "repro": "Registration no.",
+    "versi": "Version no.",
+    "versd": "Dataset version",
+    "testMode": "Test mode",
+    "traegerVstrl": "Träger code",
+    "traegerBundesland": "Province"
   },
   "mail": {
     "inbox": "Inbox",
