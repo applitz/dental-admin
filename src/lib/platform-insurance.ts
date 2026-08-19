@@ -44,6 +44,10 @@ export function updateInsurer(
 ): Promise<InsurerAdmin> {
   return apiFetch(`/api/v1/platform/insurance/insurers/${id}`, { method: "PATCH", body: JSON.stringify(body) });
 }
+export function deleteInsurer(id: string): Promise<void> {
+  // 204 No Content — apiFetch returns {} for an empty body, which resolves the void promise fine.
+  return apiFetch(`/api/v1/platform/insurance/insurers/${id}`, { method: "DELETE" });
+}
 export function getDvpSettings(): Promise<DvpSettings> {
   return apiFetch("/api/v1/platform/insurance/dvp-settings");
 }
@@ -109,8 +113,9 @@ export function importInsurerServices(insurerId: string, file: File): Promise<{ 
 
 // The template is text/csv, so apiFetch (which JSON-parses) can't be used.
 // Raw authenticated fetch mirroring apiFetch's auth headers, then trigger a
-// browser download.
-export async function downloadServicesTemplate(insurerId: string): Promise<void> {
+// browser download. Country-level (not per-insurer): the same sheet is used to
+// upload any company's services.
+export async function downloadCountryTemplate(country: string): Promise<void> {
   const headers = new Headers();
   const access = getAccessToken();
   if (access) headers.set("Authorization", `Bearer ${access}`);
@@ -118,7 +123,7 @@ export async function downloadServicesTemplate(insurerId: string): Promise<void>
   if (gate) headers.set("X-Platform-Gate", gate);
 
   const res = await fetch(
-    `${API_URL}/api/v1/platform/insurance/insurers/${insurerId}/services/template`,
+    `${API_URL}/api/v1/platform/insurance/services/template?country=${encodeURIComponent(country)}`,
     { headers },
   );
   if (!res.ok) throw new Error("template_download_failed");
