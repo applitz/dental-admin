@@ -487,7 +487,14 @@
     "versd": "Dataset version",
     "testMode": "Test mode",
     "traegerVstrl": "Träger code",
-    "traegerBundesland": "Province"
+    "traegerBundesland": "Province",
+    "country": "Country",
+    "countryAT": "Austria",
+    "countryDE": "Germany",
+    "loadReference": "Load reference data",
+    "seeding": "Loading…",
+    "seedDone": "Reference data loaded ({editions} editions, {positions} positions, {insurers} insurers, {rules} rules).",
+    "seedError": "Couldn't load reference data. Try again."
   },
   "mail": {
     "inbox": "Inbox",

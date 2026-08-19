@@ -7,6 +7,7 @@ import {
   listEditions,
   listInsurers,
   listPositions,
+  seedReference,
   setShareRules,
   updateDvpSettings,
   updateInsurer,
@@ -45,6 +46,10 @@ export function InsuranceView() {
   const t = useTranslations("insurance");
   const tc = useTranslations("common");
   const toast = useToast();
+
+  // --- Country scope ---
+  const [country, setCountry] = useState("AT");
+  const [seeding, setSeeding] = useState(false);
 
   // --- DVP settings ---
   const [dvpForm, setDvpForm] = useState<DvpFormState>(EMPTY_DVP_FORM);
@@ -116,11 +121,11 @@ export function InsuranceView() {
   const reloadInsurers = useCallback(() => {
     setLoadingInsurers(true);
     setInsurersError(false);
-    void listInsurers()
+    void listInsurers(country)
       .then(setInsurers)
       .catch(() => setInsurersError(true))
       .finally(() => setLoadingInsurers(false));
-  }, []);
+  }, [country]);
 
   useEffect(() => reloadInsurers(), [reloadInsurers]);
 
@@ -133,6 +138,7 @@ export function InsuranceView() {
       await createInsurer({
         code,
         name,
+        country,
         is_active: true,
         traeger_vstrl: newTraegerVstrl.trim() || null,
         traeger_bundesland: newTraegerBundesland.trim() || null,
@@ -247,15 +253,21 @@ export function InsuranceView() {
   const [positions, setPositions] = useState<TariffPositionAdmin[]>([]);
   const [loadingPositions, setLoadingPositions] = useState(false);
 
-  useEffect(() => {
-    void listEditions()
+  const reloadEditions = useCallback(() => {
+    setLoadingEditions(true);
+    void listEditions(country)
       .then((rows) => {
         setEditions(rows);
-        if (rows.length > 0) setSelectedEditionId(rows[0].id);
+        setSelectedEditionId(rows.length > 0 ? rows[0].id : "");
       })
-      .catch(() => setEditions([]))
+      .catch(() => {
+        setEditions([]);
+        setSelectedEditionId("");
+      })
       .finally(() => setLoadingEditions(false));
-  }, []);
+  }, [country]);
+
+  useEffect(() => reloadEditions(), [reloadEditions]);
 
   useEffect(() => {
     if (!selectedEditionId) {
@@ -279,12 +291,43 @@ export function InsuranceView() {
     };
   }, [selectedEditionId]);
 
+  const runSeed = async () => {
+    setSeeding(true);
+    try {
+      const res = await seedReference();
+      toast.success(t("seedDone", res));
+      reloadInsurers();
+      reloadEditions();
+    } catch {
+      toast.error(t("seedError"));
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   const selectedInsurer = insurers.find((i) => i.id === selectedInsurerId) ?? null;
   const hasAnyRate = rateRows.prosthetics.value.trim() !== "" || rateRows.ortho.value.trim() !== "";
 
   return (
     <div>
       <PageHeader title={t("title")} />
+
+      {/* Country scope + reference seed */}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <Field label={t("country")}>
+          <Select
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            wrapperClassName="w-48"
+          >
+            <option value="AT">{t("countryAT")}</option>
+            <option value="DE">{t("countryDE")}</option>
+          </Select>
+        </Field>
+        <Button variant="secondary" disabled={seeding} onClick={() => void runSeed()}>
+          {seeding ? t("seeding") : t("loadReference")}
+        </Button>
+      </div>
 
       {/* 0. DVP settings */}
       <section className="mt-8">
