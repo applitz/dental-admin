@@ -494,7 +494,20 @@
     "loadReference": "Load reference data",
     "seeding": "Loading…",
     "seedDone": "Reference data loaded ({editions} editions, {positions} positions, {insurers} insurers, {rules} rules).",
-    "seedError": "Couldn't load reference data. Try again."
+    "seedError": "Couldn't load reference data. Try again.",
+    "price": "Price",
+    "block": "Block",
+    "servicesTitle": "Services (uploaded)",
+    "downloadTemplate": "Download template",
+    "uploadServices": "Upload services",
+    "importing": "Importing…",
+    "servicesImported": "Imported {count} services.",
+    "servicesImportFailed": "Import failed — fix the rows below and re-upload.",
+    "noServices": "No services uploaded for this company yet.",
+    "colShortcut": "Shortcut",
+    "colDvpCode": "DVP code",
+    "colPatientShare": "Patient share",
+    "colAge": "Age"
   },
   "mail": {
     "inbox": "Inbox",

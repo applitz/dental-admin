@@ -494,7 +494,20 @@
     "loadReference": "Referenzdaten laden",
     "seeding": "Wird geladen…",
     "seedDone": "Referenzdaten geladen ({editions} Ausgaben, {positions} Positionen, {insurers} Kassen, {rules} Regeln).",
-    "seedError": "Referenzdaten konnten nicht geladen werden. Bitte erneut versuchen."
+    "seedError": "Referenzdaten konnten nicht geladen werden. Bitte erneut versuchen.",
+    "price": "Preis",
+    "block": "Block",
+    "servicesTitle": "Leistungen (hochgeladen)",
+    "downloadTemplate": "Vorlage herunterladen",
+    "uploadServices": "Leistungen hochladen",
+    "importing": "Wird importiert…",
+    "servicesImported": "{count} Leistungen importiert.",
+    "servicesImportFailed": "Import fehlgeschlagen — bitte die Zeilen unten korrigieren und erneut hochladen.",
+    "noServices": "Für diese Kasse wurden noch keine Leistungen hochgeladen.",
+    "colShortcut": "Kürzel",
+    "colDvpCode": "DVP-Code",
+    "colPatientShare": "Selbstbehalt",
+    "colAge": "Alter"
   },
   "mail": {
     "inbox": "Posteingang",
