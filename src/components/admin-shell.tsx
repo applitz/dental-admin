@@ -1,7 +1,6 @@
 "use client";
 
 import { FeaturesView } from "@/components/features-view";
-import { InsuranceView } from "@/components/insurance-view";
 import { MailboxInbox } from "@/components/mail/mailbox-inbox";
 import { SystemView } from "@/components/system-view";
 import { TenantDetailPanel } from "@/components/tenant-detail-panel";
@@ -46,7 +45,6 @@ import {
   ServerCog,
   Settings,
   Shield,
-  ShieldCheck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -63,8 +61,7 @@ export type AdminView =
   | "features"
   | "settings"
   | "audit"
-  | "system"
-  | "insurance";
+  | "system";
 
 const NAV: { id: AdminView; href: string; icon: LucideIcon }[] = [
   { id: "dashboard", href: "", icon: LayoutDashboard },
@@ -73,7 +70,6 @@ const NAV: { id: AdminView; href: string; icon: LucideIcon }[] = [
   { id: "plans", href: "/plans", icon: CreditCard },
   { id: "mail", href: "/mail", icon: Mail },
   { id: "features", href: "/features", icon: Layers },
-  { id: "insurance", href: "/insurance", icon: ShieldCheck },
   { id: "settings", href: "/settings", icon: Settings },
   { id: "audit", href: "/audit", icon: ScrollText },
   { id: "system", href: "/system", icon: ServerCog },
@@ -170,7 +166,6 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
         {view === "settings" && <SettingsView />}
         {view === "audit" && <AuditView />}
         {view === "features" && <FeaturesView />}
-        {view === "insurance" && <InsuranceView />}
         {view === "system" && <SystemView />}
       </main>
     </div>

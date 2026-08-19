@@ -3,7 +3,6 @@
 import {
   createInsurer,
   downloadServicesTemplate,
-  getDvpSettings,
   getShareRules,
   importInsurerServices,
   listEditions,
@@ -12,9 +11,7 @@ import {
   listPositions,
   seedReference,
   setShareRules,
-  updateDvpSettings,
   updateInsurer,
-  type DvpSettings,
   type InsurerAdmin,
   type InsurerServiceAdmin,
   type ShareRule,
@@ -29,8 +26,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Field } from "@/components/ui/field";
-import { PageHeader } from "@/components/ui/page-header";
 import { TableCard, Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 
@@ -43,75 +38,12 @@ const EMPTY_RATE_ROWS: Record<ShareRule["share_category"], ShareRowState> = {
   ortho: { kind: "percent", value: "" },
 };
 
-type DvpFormState = { repro: string; versi: string; versd: string; test_mode: boolean };
-
-const EMPTY_DVP_FORM: DvpFormState = { repro: "", versi: "", versd: "", test_mode: false };
-
-export function InsuranceView() {
+export function CountryInsurance({ country }: { country: string }) {
   const t = useTranslations("insurance");
   const tc = useTranslations("common");
   const toast = useToast();
 
-  // --- Country scope ---
-  const [country, setCountry] = useState("AT");
   const [seeding, setSeeding] = useState(false);
-
-  // --- DVP settings ---
-  const [dvpForm, setDvpForm] = useState<DvpFormState>(EMPTY_DVP_FORM);
-  const [loadingDvp, setLoadingDvp] = useState(true);
-  const [dvpError, setDvpError] = useState(false);
-  const [savingDvp, setSavingDvp] = useState(false);
-  const [dvpSaved, setDvpSaved] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoadingDvp(true);
-    setDvpError(false);
-    void getDvpSettings()
-      .then((settings) => {
-        if (cancelled) return;
-        setDvpForm({
-          repro: settings.repro ?? "",
-          versi: settings.versi ?? "",
-          versd: settings.versd,
-          test_mode: settings.test_mode,
-        });
-      })
-      .catch(() => {
-        if (!cancelled) setDvpError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingDvp(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const saveDvpSettings = async () => {
-    setSavingDvp(true);
-    setDvpSaved(false);
-    try {
-      const updated = await updateDvpSettings({
-        repro: dvpForm.repro.trim() || null,
-        versi: dvpForm.versi.trim() || null,
-        versd: dvpForm.versd.trim(),
-        test_mode: dvpForm.test_mode,
-      });
-      setDvpForm({
-        repro: updated.repro ?? "",
-        versi: updated.versi ?? "",
-        versd: updated.versd,
-        test_mode: updated.test_mode,
-      });
-      setDvpSaved(true);
-      setTimeout(() => setDvpSaved(false), 2000);
-    } catch {
-      toast.error(t("loadError"));
-    } finally {
-      setSavingDvp(false);
-    }
-  };
 
   // --- Insurers ---
   const [insurers, setInsurers] = useState<InsurerAdmin[]>([]);
@@ -387,76 +319,17 @@ export function InsuranceView() {
 
   return (
     <div>
-      <PageHeader title={t("title")} />
-
-      {/* Country scope + reference seed */}
-      <div className="mt-4 flex flex-wrap items-end gap-3">
-        <Field label={t("country")}>
-          <Select
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            wrapperClassName="w-48"
-          >
-            <option value="AT">{t("countryAT")}</option>
-            <option value="DE">{t("countryDE")}</option>
-          </Select>
-        </Field>
-        <Button variant="secondary" disabled={seeding} onClick={() => void runSeed()}>
-          {seeding ? t("seeding") : t("loadReference")}
-        </Button>
-      </div>
-
-      {/* 0. DVP settings */}
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-slate-900">{t("dvpSettings")}</h2>
-        {loadingDvp ? (
-          <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
-        ) : dvpError ? (
-          <p className="mt-4 text-sm text-red-600">{t("loadError")}</p>
-        ) : (
-          <Card className="mt-4 p-5">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label={t("repro")}>
-                <Input
-                  value={dvpForm.repro}
-                  onChange={(e) => setDvpForm((prev) => ({ ...prev, repro: e.target.value }))}
-                />
-              </Field>
-              <Field label={t("versi")}>
-                <Input
-                  value={dvpForm.versi}
-                  onChange={(e) => setDvpForm((prev) => ({ ...prev, versi: e.target.value }))}
-                />
-              </Field>
-              <Field label={t("versd")}>
-                <Input
-                  value={dvpForm.versd}
-                  onChange={(e) => setDvpForm((prev) => ({ ...prev, versd: e.target.value }))}
-                />
-              </Field>
-              <Field label={t("testMode")}>
-                <label className="flex h-10 items-center gap-2 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={dvpForm.test_mode}
-                    onChange={(e) => setDvpForm((prev) => ({ ...prev, test_mode: e.target.checked }))}
-                  />
-                  {t("testMode")}
-                </label>
-              </Field>
-            </div>
-            <div className="mt-4 flex items-center gap-3">
-              <Button disabled={savingDvp} onClick={() => void saveDvpSettings()}>
-                {t("save")}
-              </Button>
-              {dvpSaved && <span className="text-sm text-emerald-600">{t("saved")}</span>}
-            </div>
-          </Card>
-        )}
-      </section>
+      {/* Reference seed (AT reference data only) */}
+      {country === "AT" && (
+        <div className="flex flex-wrap items-end gap-3">
+          <Button variant="secondary" disabled={seeding} onClick={() => void runSeed()}>
+            {seeding ? t("seeding") : t("loadReference")}
+          </Button>
+        </div>
+      )}
 
       {/* 1. Insurers */}
-      <section className="mt-8">
+      <section className={cn(country === "AT" ? "mt-8" : "")}>
         <h2 className="text-lg font-semibold text-slate-900">{t("insurers")}</h2>
         {loadingInsurers ? (
           <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
