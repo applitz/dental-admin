@@ -4,15 +4,12 @@ import {
   createInsurer,
   deleteInsurer,
   downloadCountryTemplate,
-  getShareRules,
   importInsurerServices,
   listInsurers,
   listInsurerServices,
-  setShareRules,
   updateInsurer,
   type InsurerAdmin,
   type InsurerServiceAdmin,
-  type ShareRule,
 } from "@/lib/platform-insurance";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -20,20 +17,10 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { TableCard, Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm-provider";
-
-const SHARE_CATEGORIES: ShareRule["share_category"][] = ["prosthetics", "ortho"];
-
-type ShareRowState = { kind: ShareRule["kind"]; value: string };
-
-const EMPTY_RATE_ROWS: Record<ShareRule["share_category"], ShareRowState> = {
-  prosthetics: { kind: "percent", value: "" },
-  ortho: { kind: "percent", value: "" },
-};
 
 export function CountryInsurance({ country }: { country: string }) {
   const t = useTranslations("insurance");
@@ -141,62 +128,8 @@ export function CountryInsurance({ country }: { country: string }) {
     }
   };
 
-  // --- Patient-share rates ---
+  // --- Selection (row click drives the services table below) ---
   const [selectedInsurerId, setSelectedInsurerId] = useState<string | null>(null);
-  const [rateRows, setRateRows] = useState(EMPTY_RATE_ROWS);
-  const [loadingRates, setLoadingRates] = useState(false);
-  const [ratesError, setRatesError] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    if (!selectedInsurerId) {
-      setRateRows(EMPTY_RATE_ROWS);
-      return;
-    }
-    let cancelled = false;
-    setLoadingRates(true);
-    setRatesError(false);
-    setSaved(false);
-    void getShareRules(selectedInsurerId)
-      .then((rules) => {
-        if (cancelled) return;
-        const next = { ...EMPTY_RATE_ROWS };
-        for (const rule of rules) {
-          next[rule.share_category] = { kind: rule.kind, value: rule.value };
-        }
-        setRateRows(next);
-      })
-      .catch(() => {
-        if (!cancelled) setRatesError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingRates(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedInsurerId]);
-
-  const saveRates = async () => {
-    if (!selectedInsurerId) return;
-    setSaving(true);
-    setSaved(false);
-    try {
-      const rows: ShareRule[] = SHARE_CATEGORIES.filter((cat) => rateRows[cat].value.trim() !== "").map((cat) => ({
-        share_category: cat,
-        kind: rateRows[cat].kind,
-        value: rateRows[cat].value.trim(),
-      }));
-      await setShareRules(selectedInsurerId, rows);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch {
-      toast.error(t("loadError"));
-    } finally {
-      setSaving(false);
-    }
-  };
 
   // --- Uploaded services (per insurer) ---
   const [services, setServices] = useState<InsurerServiceAdmin[]>([]);
@@ -280,7 +213,6 @@ export function CountryInsurance({ country }: { country: string }) {
   };
 
   const selectedInsurer = insurers.find((i) => i.id === selectedInsurerId) ?? null;
-  const hasAnyRate = rateRows.prosthetics.value.trim() !== "" || rateRows.ortho.value.trim() !== "";
 
   return (
     <div>
@@ -453,73 +385,7 @@ export function CountryInsurance({ country }: { country: string }) {
         )}
       </section>
 
-      {/* 2. Patient-share rates */}
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-slate-900">{t("shareRates")}</h2>
-        {!selectedInsurer ? (
-          <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
-            —
-          </p>
-        ) : (
-          <Card className="mt-4 p-5">
-            <p className="text-sm font-medium text-slate-700">
-              {selectedInsurer.name} <span className="text-xs text-slate-400">{selectedInsurer.code}</span>
-            </p>
-            {loadingRates ? (
-              <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
-            ) : ratesError ? (
-              <p className="mt-4 text-sm text-red-600">{t("loadError")}</p>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {!hasAnyRate && <p className="text-sm text-amber-600">{t("noRates")}</p>}
-                {SHARE_CATEGORIES.map((cat) => (
-                  <div key={cat} className="flex items-center gap-3">
-                    <span className="w-32 shrink-0 text-sm text-slate-600">
-                      {cat === "prosthetics" ? t("catProsthetics") : t("catOrtho")}
-                    </span>
-                    <Select
-                      size="sm"
-                      wrapperClassName="w-32"
-                      value={rateRows[cat].kind}
-                      onChange={(e) =>
-                        setRateRows((prev) => ({
-                          ...prev,
-                          [cat]: { ...prev[cat], kind: e.target.value as ShareRule["kind"] },
-                        }))
-                      }
-                    >
-                      <option value="percent">{t("percent")}</option>
-                      <option value="fixed">{t("fixed")}</option>
-                    </Select>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={rateRows[cat].value}
-                      onChange={(e) =>
-                        setRateRows((prev) => ({
-                          ...prev,
-                          [cat]: { ...prev[cat], value: e.target.value },
-                        }))
-                      }
-                      placeholder={t("value")}
-                      className="w-32"
-                    />
-                  </div>
-                ))}
-                <div className="flex items-center gap-3 pt-2">
-                  <Button disabled={saving} onClick={() => void saveRates()}>
-                    {t("save")}
-                  </Button>
-                  {saved && <span className="text-sm text-emerald-600">{t("saved")}</span>}
-                </div>
-              </div>
-            )}
-          </Card>
-        )}
-      </section>
-
-      {/* 2b. Uploaded services (per insurer) */}
+      {/* 2. Uploaded services (per insurer) */}
       <section className="mt-8">
         <h2 className="text-lg font-semibold text-slate-900">{t("servicesTitle")}</h2>
         {!selectedInsurer ? (
