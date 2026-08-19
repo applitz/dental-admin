@@ -507,7 +507,8 @@
     "colShortcut": "Shortcut",
     "colDvpCode": "DVP code",
     "colPatientShare": "Patient share",
-    "colAge": "Age"
+    "colAge": "Age",
+    "selectInsurerForServices": "Select a company in the Insurers list above (click its code) to download the template and upload its services."
   },
   "mail": {
     "inbox": "Inbox",

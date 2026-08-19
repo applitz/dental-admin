@@ -650,7 +650,7 @@ export function InsuranceView() {
         <h2 className="text-lg font-semibold text-slate-900">{t("servicesTitle")}</h2>
         {!selectedInsurer ? (
           <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
-            —
+            {t("selectInsurerForServices")}
           </p>
         ) : (
           <Card className="mt-4 p-5">

@@ -507,7 +507,8 @@
     "colShortcut": "Kürzel",
     "colDvpCode": "DVP-Code",
     "colPatientShare": "Selbstbehalt",
-    "colAge": "Alter"
+    "colAge": "Alter",
+    "selectInsurerForServices": "Oben in der Kassenliste eine Kasse auswählen (auf den Code klicken), um die Vorlage herunterzuladen und Leistungen hochzuladen."
   },
   "mail": {
     "inbox": "Posteingang",
