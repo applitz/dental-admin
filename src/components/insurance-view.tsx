@@ -2,10 +2,13 @@
 
 import {
   createInsurer,
+  downloadServicesTemplate,
   getDvpSettings,
   getShareRules,
+  importInsurerServices,
   listEditions,
   listInsurers,
+  listInsurerServices,
   listPositions,
   seedReference,
   setShareRules,
@@ -13,13 +16,15 @@ import {
   updateInsurer,
   type DvpSettings,
   type InsurerAdmin,
+  type InsurerServiceAdmin,
   type ShareRule,
   type TariffEdition,
   type TariffPositionAdmin,
 } from "@/lib/platform-insurance";
+import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -243,6 +248,78 @@ export function InsuranceView() {
       toast.error(t("loadError"));
     } finally {
       setSaving(false);
+    }
+  };
+
+  // --- Uploaded services (per insurer) ---
+  const [services, setServices] = useState<InsurerServiceAdmin[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+  const [servicesError, setServicesError] = useState(false);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const reloadServices = useCallback((insurerId: string) => {
+    setLoadingServices(true);
+    setServicesError(false);
+    return listInsurerServices(insurerId)
+      .then(setServices)
+      .catch(() => setServicesError(true))
+      .finally(() => setLoadingServices(false));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedInsurerId) {
+      setServices([]);
+      setImportErrors([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingServices(true);
+    setServicesError(false);
+    setImportErrors([]);
+    void listInsurerServices(selectedInsurerId)
+      .then((rows) => {
+        if (!cancelled) setServices(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setServicesError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingServices(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedInsurerId]);
+
+  const handleServiceFile = async (file: File) => {
+    if (!selectedInsurerId) return;
+    setUploadBusy(true);
+    setImportErrors([]);
+    try {
+      const res = await importInsurerServices(selectedInsurerId, file);
+      toast.success(t("servicesImported", { count: res.imported }));
+      await reloadServices(selectedInsurerId);
+    } catch (err) {
+      const rows =
+        err instanceof ApiError
+          ? ((err.body.params as { errors?: string[] } | undefined)?.errors ?? [])
+          : [];
+      setImportErrors(rows);
+      toast.error(t("servicesImportFailed"));
+    } finally {
+      setUploadBusy(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const downloadTemplate = async () => {
+    if (!selectedInsurerId) return;
+    try {
+      await downloadServicesTemplate(selectedInsurerId);
+    } catch {
+      toast.error(t("loadError"));
     }
   };
 
@@ -563,6 +640,109 @@ export function InsuranceView() {
                   {saved && <span className="text-sm text-emerald-600">{t("saved")}</span>}
                 </div>
               </div>
+            )}
+          </Card>
+        )}
+      </section>
+
+      {/* 2b. Uploaded services (per insurer) */}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-slate-900">{t("servicesTitle")}</h2>
+        {!selectedInsurer ? (
+          <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+            —
+          </p>
+        ) : (
+          <Card className="mt-4 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-medium text-slate-700">
+                {selectedInsurer.name} <span className="text-xs text-slate-400">{selectedInsurer.code}</span>
+              </p>
+              <div className="flex items-center gap-3">
+                <Button variant="secondary" disabled={uploadBusy} onClick={() => void downloadTemplate()}>
+                  {t("downloadTemplate")}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handleServiceFile(file);
+                  }}
+                />
+                <Button disabled={uploadBusy} onClick={() => fileInputRef.current?.click()}>
+                  {uploadBusy ? t("importing") : t("uploadServices")}
+                </Button>
+              </div>
+            </div>
+
+            {importErrors.length > 0 && (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <p className="font-medium">{t("servicesImportFailed")}</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5">
+                  {importErrors.map((msg, i) => (
+                    <li key={i}>{msg}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {loadingServices ? (
+              <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
+            ) : servicesError ? (
+              <p className="mt-4 text-sm text-red-600">{t("loadError")}</p>
+            ) : (
+              <TableCard className="mt-4">
+                <Table>
+                  <THead>
+                    <Tr>
+                      <Th>{t("colShortcut")}</Th>
+                      <Th>{t("name")}</Th>
+                      <Th>{t("colDvpCode")}</Th>
+                      <Th>{t("block")}</Th>
+                      <Th>{t("price")}</Th>
+                      <Th>{t("colPatientShare")}</Th>
+                      <Th>{t("colAge")}</Th>
+                      <Th>{t("active")}</Th>
+                    </Tr>
+                  </THead>
+                  <TBody>
+                    {services.map((s) => (
+                      <Tr key={s.id}>
+                        <Td className="font-medium text-slate-900">{s.shortcut}</Td>
+                        <Td>{s.name}</Td>
+                        <Td>{s.dvp_code}</Td>
+                        <Td>{s.block}</Td>
+                        <Td>€{s.price}</Td>
+                        <Td>
+                          {s.patient_share_kind === "percent"
+                            ? `${s.patient_share_value}%`
+                            : s.patient_share_kind === "fixed"
+                              ? `€${s.patient_share_value}`
+                              : "—"}
+                        </Td>
+                        <Td>
+                          {s.age_min == null && s.age_max == null
+                            ? "—"
+                            : `${s.age_min ?? ""}–${s.age_max ?? ""}`}
+                        </Td>
+                        <Td>
+                          <input type="checkbox" checked={s.is_active} readOnly />
+                        </Td>
+                      </Tr>
+                    ))}
+                    {services.length === 0 && (
+                      <Tr>
+                        <Td colSpan={8} className="px-4 py-12 text-center text-slate-500">
+                          {t("noServices")}
+                        </Td>
+                      </Tr>
+                    )}
+                  </TBody>
+                </Table>
+              </TableCard>
             )}
           </Card>
         )}
