@@ -386,7 +386,8 @@
       "launchActiveHelper": "Nothing happens for this country until active.",
       "holidaysNote": "Unchecked holidays will NOT close clinics.",
       "holidaysLoading": "Loading holidays…",
-      "holidaysEmpty": "No holidays available for this country yet."
+      "holidaysEmpty": "No holidays available for this country yet.",
+      "insurance": "Insurance"
     }
   },
   "plans": {

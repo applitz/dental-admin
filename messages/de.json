@@ -386,7 +386,8 @@
       "launchActiveHelper": "Für dieses Land passiert nichts, bis es aktiv ist.",
       "holidaysNote": "Nicht angehakte Feiertage schließen die Kliniken NICHT.",
       "holidaysLoading": "Feiertage werden geladen…",
-      "holidaysEmpty": "Für dieses Land sind noch keine Feiertage verfügbar."
+      "holidaysEmpty": "Für dieses Land sind noch keine Feiertage verfügbar.",
+      "insurance": "Versicherung"
     }
   },
   "plans": {

@@ -16,12 +16,13 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChipTabs } from "@/components/ui/tabs";
 import { useConfirm } from "@/components/ui/confirm-provider";
+import { CountryInsurance } from "@/components/country-insurance";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 const STEPS = ["country", "channels", "tax", "holidays", "sms"] as const;
-type Step = (typeof STEPS)[number];
+type Step = (typeof STEPS)[number] | "insurance";
 
 type TaxRow = { name: string; kind: "percent" | "fixed"; value: string };
 
@@ -130,7 +131,10 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
         ],
   );
 
-  const stepIndex = STEPS.indexOf(step);
+  // Insurance is an edit-only panel appended after the market-field steps —
+  // it only exists once the country is saved (iso2 is fixed).
+  const steps: readonly Step[] = isEdit ? [...STEPS, "insurance"] : STEPS;
+  const stepIndex = steps.indexOf(step);
 
   // Fetch the country pack whenever a full 2-letter ISO code is present (both
   // create and edit — edit needs it for the holidays/timezone/language option
@@ -341,7 +345,7 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
       <div className="border-b border-slate-100 px-6 py-4">
         <ChipTabs
           size="sm"
-          tabs={STEPS.map((s, i) => ({ id: s, label: `${i + 1}. ${t(`wizard.${s}`)}` }))}
+          tabs={steps.map((s, i) => ({ id: s, label: `${i + 1}. ${t(`wizard.${s}`)}` }))}
           active={step}
           onChange={(id) => goTo(id as Step)}
         />
@@ -691,6 +695,8 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
           </div>
         )}
 
+        {step === "insurance" && <CountryInsurance country={iso2} />}
+
         {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
 
@@ -700,14 +706,14 @@ export function MarketWizard({ initial, onDone, onCancel }: WizardProps) {
         </Button>
         <div className="flex gap-2">
           {stepIndex > 0 && (
-            <Button type="button" variant="secondary" onClick={() => goTo(STEPS[stepIndex - 1])}>
+            <Button type="button" variant="secondary" onClick={() => goTo(steps[stepIndex - 1])}>
               {t("back")}
             </Button>
           )}
-          {stepIndex < STEPS.length - 1 ? (
+          {stepIndex < steps.length - 1 ? (
             <Button
               type="button"
-              onClick={() => goTo(STEPS[stepIndex + 1])}
+              onClick={() => goTo(steps[stepIndex + 1])}
               disabled={
                 step === "country" &&
                 (iso2.length !== 2 || name.trim().length < 2 || !hasValidLocales || !timezone.trim())
