@@ -509,7 +509,13 @@
     "colDvpCode": "DVP code",
     "colPatientShare": "Patient share",
     "colAge": "Age",
-    "selectInsurerForServices": "Select a company in the Insurers list above (click its code) to download the template and upload its services."
+    "selectInsurerForServices": "Select a company in the Insurers list above (click its code) to download the template and upload its services.",
+    "servicesHint": "Add a company below, then use its Upload button to load its services from the sheet.",
+    "deleteInsurerConfirm": "Delete {name} and all its services? This can't be undone.",
+    "insurerDeleted": "Company deleted.",
+    "deleteFailed": "Couldn't delete. Try again.",
+    "upload": "Upload",
+    "delete": "Delete"
   },
   "mail": {
     "inbox": "Inbox",

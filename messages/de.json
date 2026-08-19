@@ -509,7 +509,13 @@
     "colDvpCode": "DVP-Code",
     "colPatientShare": "Selbstbehalt",
     "colAge": "Alter",
-    "selectInsurerForServices": "Oben in der Kassenliste eine Kasse auswählen (auf den Code klicken), um die Vorlage herunterzuladen und Leistungen hochzuladen."
+    "selectInsurerForServices": "Oben in der Kassenliste eine Kasse auswählen (auf den Code klicken), um die Vorlage herunterzuladen und Leistungen hochzuladen.",
+    "servicesHint": "Unten eine Kasse hinzufügen und dann über deren Hochladen-Schaltfläche die Leistungen aus der Vorlage laden.",
+    "deleteInsurerConfirm": "{name} und alle Leistungen löschen? Kann nicht rückgängig gemacht werden.",
+    "insurerDeleted": "Kasse gelöscht.",
+    "deleteFailed": "Löschen fehlgeschlagen. Bitte erneut versuchen.",
+    "upload": "Hochladen",
+    "delete": "Löschen"
   },
   "mail": {
     "inbox": "Posteingang",

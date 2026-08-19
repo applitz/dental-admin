@@ -2,21 +2,17 @@
 
 import {
   createInsurer,
-  downloadServicesTemplate,
+  deleteInsurer,
+  downloadCountryTemplate,
   getShareRules,
   importInsurerServices,
-  listEditions,
   listInsurers,
   listInsurerServices,
-  listPositions,
-  seedReference,
   setShareRules,
   updateInsurer,
   type InsurerAdmin,
   type InsurerServiceAdmin,
   type ShareRule,
-  type TariffEdition,
-  type TariffPositionAdmin,
 } from "@/lib/platform-insurance";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -28,6 +24,7 @@ import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { TableCard, Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-provider";
 
 const SHARE_CATEGORIES: ShareRule["share_category"][] = ["prosthetics", "ortho"];
 
@@ -42,8 +39,7 @@ export function CountryInsurance({ country }: { country: string }) {
   const t = useTranslations("insurance");
   const tc = useTranslations("common");
   const toast = useToast();
-
-  const [seeding, setSeeding] = useState(false);
+  const confirm = useConfirm();
 
   // --- Insurers ---
   const [insurers, setInsurers] = useState<InsurerAdmin[]>([]);
@@ -126,6 +122,25 @@ export function CountryInsurance({ country }: { country: string }) {
     }
   };
 
+  const removeInsurer = async (id: string, name: string) => {
+    if (
+      !(await confirm({
+        title: t("delete"),
+        message: t("deleteInsurerConfirm", { name }),
+        tone: "destructive",
+      }))
+    )
+      return;
+    try {
+      await deleteInsurer(id);
+      if (selectedInsurerId === id) setSelectedInsurerId(null);
+      toast.success(t("insurerDeleted"));
+      reloadInsurers();
+    } catch {
+      toast.error(t("deleteFailed"));
+    }
+  };
+
   // --- Patient-share rates ---
   const [selectedInsurerId, setSelectedInsurerId] = useState<string | null>(null);
   const [rateRows, setRateRows] = useState(EMPTY_RATE_ROWS);
@@ -189,6 +204,7 @@ export function CountryInsurance({ country }: { country: string }) {
   const [servicesError, setServicesError] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
   const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [uploadTargetId, setUploadTargetId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reloadServices = useCallback((insurerId: string) => {
@@ -226,13 +242,16 @@ export function CountryInsurance({ country }: { country: string }) {
   }, [selectedInsurerId]);
 
   const handleServiceFile = async (file: File) => {
-    if (!selectedInsurerId) return;
+    const targetId = uploadTargetId;
+    if (!targetId) return;
     setUploadBusy(true);
     setImportErrors([]);
+    // Show the target company's services table after upload.
+    setSelectedInsurerId(targetId);
     try {
-      const res = await importInsurerServices(selectedInsurerId, file);
+      const res = await importInsurerServices(targetId, file);
       toast.success(t("servicesImported", { count: res.imported }));
-      await reloadServices(selectedInsurerId);
+      await reloadServices(targetId);
     } catch (err) {
       const rows =
         err instanceof ApiError
@@ -242,75 +261,21 @@ export function CountryInsurance({ country }: { country: string }) {
       toast.error(t("servicesImportFailed"));
     } finally {
       setUploadBusy(false);
+      setUploadTargetId(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const downloadTemplate = async () => {
-    if (!selectedInsurerId) return;
-    try {
-      await downloadServicesTemplate(selectedInsurerId);
-    } catch {
-      toast.error(t("loadError"));
-    }
+  const startUpload = (insurerId: string) => {
+    setUploadTargetId(insurerId);
+    fileInputRef.current?.click();
   };
 
-  // --- Tariff catalog (read-only) ---
-  const [editions, setEditions] = useState<TariffEdition[]>([]);
-  const [loadingEditions, setLoadingEditions] = useState(true);
-  const [selectedEditionId, setSelectedEditionId] = useState<string>("");
-  const [positions, setPositions] = useState<TariffPositionAdmin[]>([]);
-  const [loadingPositions, setLoadingPositions] = useState(false);
-
-  const reloadEditions = useCallback(() => {
-    setLoadingEditions(true);
-    void listEditions(country)
-      .then((rows) => {
-        setEditions(rows);
-        setSelectedEditionId(rows.length > 0 ? rows[0].id : "");
-      })
-      .catch(() => {
-        setEditions([]);
-        setSelectedEditionId("");
-      })
-      .finally(() => setLoadingEditions(false));
-  }, [country]);
-
-  useEffect(() => reloadEditions(), [reloadEditions]);
-
-  useEffect(() => {
-    if (!selectedEditionId) {
-      setPositions([]);
-      return;
-    }
-    let cancelled = false;
-    setLoadingPositions(true);
-    void listPositions(selectedEditionId)
-      .then((rows) => {
-        if (!cancelled) setPositions(rows);
-      })
-      .catch(() => {
-        if (!cancelled) setPositions([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingPositions(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedEditionId]);
-
-  const runSeed = async () => {
-    setSeeding(true);
+  const downloadTemplate = async () => {
     try {
-      const res = await seedReference();
-      toast.success(t("seedDone", res));
-      reloadInsurers();
-      reloadEditions();
+      await downloadCountryTemplate(country);
     } catch {
-      toast.error(t("seedError"));
-    } finally {
-      setSeeding(false);
+      toast.error(t("loadError"));
     }
   };
 
@@ -319,17 +284,31 @@ export function CountryInsurance({ country }: { country: string }) {
 
   return (
     <div>
-      {/* Reference seed (AT reference data only) */}
-      {country === "AT" && (
-        <div className="flex flex-wrap items-end gap-3">
-          <Button variant="secondary" disabled={seeding} onClick={() => void runSeed()}>
-            {seeding ? t("seeding") : t("loadReference")}
-          </Button>
+      {/* Shared hidden file input, driven by each row's Upload button. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void handleServiceFile(file);
+        }}
+      />
+
+      {/* Panel header — always-visible, country-level template download */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">{t("title")}</h2>
+          <p className="mt-1 max-w-xl text-sm text-slate-500">{t("servicesHint")}</p>
         </div>
-      )}
+        <Button variant="secondary" onClick={() => void downloadTemplate()}>
+          {t("downloadTemplate")}
+        </Button>
+      </div>
 
       {/* 1. Insurers */}
-      <section className={cn(country === "AT" ? "mt-8" : "")}>
+      <section className="mt-8">
         <h2 className="text-lg font-semibold text-slate-900">{t("insurers")}</h2>
         {loadingInsurers ? (
           <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
@@ -345,6 +324,7 @@ export function CountryInsurance({ country }: { country: string }) {
                   <Th>{t("traegerVstrl")}</Th>
                   <Th>{t("traegerBundesland")}</Th>
                   <Th>{t("active")}</Th>
+                  <Th className="text-right" />
                 </Tr>
               </THead>
               <TBody>
@@ -401,6 +381,26 @@ export function CountryInsurance({ country }: { country: string }) {
                         onChange={(e) => void toggleInsurerActive(row.id, e.target.checked)}
                       />
                     </Td>
+                    <Td onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={uploadBusy}
+                          onClick={() => startUpload(row.id)}
+                        >
+                          {uploadBusy && uploadTargetId === row.id ? t("importing") : t("upload")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => void removeInsurer(row.id, row.name)}
+                        >
+                          {t("delete")}
+                        </Button>
+                      </div>
+                    </Td>
                   </Tr>
                 ))}
                 <Tr>
@@ -445,6 +445,7 @@ export function CountryInsurance({ country }: { country: string }) {
                       {t("addInsurer")}
                     </Button>
                   </Td>
+                  <Td />
                 </Tr>
               </TBody>
             </Table>
@@ -531,24 +532,14 @@ export function CountryInsurance({ country }: { country: string }) {
               <p className="text-sm font-medium text-slate-700">
                 {selectedInsurer.name} <span className="text-xs text-slate-400">{selectedInsurer.code}</span>
               </p>
-              <div className="flex items-center gap-3">
-                <Button variant="secondary" disabled={uploadBusy} onClick={() => void downloadTemplate()}>
-                  {t("downloadTemplate")}
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,text/csv"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void handleServiceFile(file);
-                  }}
-                />
-                <Button disabled={uploadBusy} onClick={() => fileInputRef.current?.click()}>
-                  {uploadBusy ? t("importing") : t("uploadServices")}
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={uploadBusy}
+                onClick={() => startUpload(selectedInsurer.id)}
+              >
+                {uploadBusy && uploadTargetId === selectedInsurer.id ? t("importing") : t("upload")}
+              </Button>
             </div>
 
             {importErrors.length > 0 && (
@@ -618,71 +609,6 @@ export function CountryInsurance({ country }: { country: string }) {
               </TableCard>
             )}
           </Card>
-        )}
-      </section>
-
-      {/* 3. Tariff catalog (read-only) */}
-      <section className="mt-8">
-        <h2 className="text-lg font-semibold text-slate-900">{t("catalog")}</h2>
-        {loadingEditions ? (
-          <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
-        ) : editions.length === 0 ? (
-          <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
-            —
-          </p>
-        ) : (
-          <div className="mt-4">
-            <Select
-              value={selectedEditionId}
-              onChange={(e) => setSelectedEditionId(e.target.value)}
-              wrapperClassName="max-w-md"
-            >
-              {editions.map((ed) => (
-                <option key={ed.id} value={ed.id}>
-                  {ed.label} — {ed.contract} ({ed.country})
-                </option>
-              ))}
-            </Select>
-            {loadingPositions ? (
-              <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
-            ) : (
-              <TableCard className="mt-4">
-                <Table>
-                  <THead>
-                    <Tr>
-                      <Th>{t("code")}</Th>
-                      <Th>Block</Th>
-                      <Th>{t("name")}</Th>
-                      <Th>{t("amount")}</Th>
-                      <Th>{t("shareCategory")}</Th>
-                      <Th>Age</Th>
-                    </Tr>
-                  </THead>
-                  <TBody>
-                    {positions.map((p) => (
-                      <Tr key={p.id}>
-                        <Td className="font-medium text-slate-900">{p.code}</Td>
-                        <Td>{p.block}</Td>
-                        <Td>{p.title_de}</Td>
-                        <Td>€{p.amount}</Td>
-                        <Td>{p.share_category}</Td>
-                        <Td>
-                          {p.age_min ?? "—"}–{p.age_max ?? "—"}
-                        </Td>
-                      </Tr>
-                    ))}
-                    {positions.length === 0 && (
-                      <Tr>
-                        <Td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                          —
-                        </Td>
-                      </Tr>
-                    )}
-                  </TBody>
-                </Table>
-              </TableCard>
-            )}
-          </div>
         )}
       </section>
     </div>
