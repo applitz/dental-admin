@@ -487,7 +487,14 @@
     "versd": "Datenbestand-Version",
     "testMode": "Testmodus",
     "traegerVstrl": "Träger-Code",
-    "traegerBundesland": "Bundesland"
+    "traegerBundesland": "Bundesland",
+    "country": "Land",
+    "countryAT": "Österreich",
+    "countryDE": "Deutschland",
+    "loadReference": "Referenzdaten laden",
+    "seeding": "Wird geladen…",
+    "seedDone": "Referenzdaten geladen ({editions} Ausgaben, {positions} Positionen, {insurers} Kassen, {rules} Regeln).",
+    "seedError": "Referenzdaten konnten nicht geladen werden. Bitte erneut versuchen."
   },
   "mail": {
     "inbox": "Posteingang",
