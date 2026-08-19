@@ -2,12 +2,15 @@
 
 import {
   createInsurer,
+  getDvpSettings,
   getShareRules,
   listEditions,
   listInsurers,
   listPositions,
   setShareRules,
+  updateDvpSettings,
   updateInsurer,
+  type DvpSettings,
   type InsurerAdmin,
   type ShareRule,
   type TariffEdition,
@@ -20,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { Field } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
 import { TableCard, Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -33,10 +37,71 @@ const EMPTY_RATE_ROWS: Record<ShareRule["share_category"], ShareRowState> = {
   ortho: { kind: "percent", value: "" },
 };
 
+type DvpFormState = { repro: string; versi: string; versd: string; test_mode: boolean };
+
+const EMPTY_DVP_FORM: DvpFormState = { repro: "", versi: "", versd: "", test_mode: false };
+
 export function InsuranceView() {
   const t = useTranslations("insurance");
   const tc = useTranslations("common");
   const toast = useToast();
+
+  // --- DVP settings ---
+  const [dvpForm, setDvpForm] = useState<DvpFormState>(EMPTY_DVP_FORM);
+  const [loadingDvp, setLoadingDvp] = useState(true);
+  const [dvpError, setDvpError] = useState(false);
+  const [savingDvp, setSavingDvp] = useState(false);
+  const [dvpSaved, setDvpSaved] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingDvp(true);
+    setDvpError(false);
+    void getDvpSettings()
+      .then((settings) => {
+        if (cancelled) return;
+        setDvpForm({
+          repro: settings.repro ?? "",
+          versi: settings.versi ?? "",
+          versd: settings.versd,
+          test_mode: settings.test_mode,
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setDvpError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDvp(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const saveDvpSettings = async () => {
+    setSavingDvp(true);
+    setDvpSaved(false);
+    try {
+      const updated = await updateDvpSettings({
+        repro: dvpForm.repro.trim() || null,
+        versi: dvpForm.versi.trim() || null,
+        versd: dvpForm.versd.trim(),
+        test_mode: dvpForm.test_mode,
+      });
+      setDvpForm({
+        repro: updated.repro ?? "",
+        versi: updated.versi ?? "",
+        versd: updated.versd,
+        test_mode: updated.test_mode,
+      });
+      setDvpSaved(true);
+      setTimeout(() => setDvpSaved(false), 2000);
+    } catch {
+      toast.error(t("loadError"));
+    } finally {
+      setSavingDvp(false);
+    }
+  };
 
   // --- Insurers ---
   const [insurers, setInsurers] = useState<InsurerAdmin[]>([]);
@@ -44,6 +109,8 @@ export function InsuranceView() {
   const [insurersError, setInsurersError] = useState(false);
   const [newCode, setNewCode] = useState("");
   const [newName, setNewName] = useState("");
+  const [newTraegerVstrl, setNewTraegerVstrl] = useState("");
+  const [newTraegerBundesland, setNewTraegerBundesland] = useState("");
   const [creating, setCreating] = useState(false);
 
   const reloadInsurers = useCallback(() => {
@@ -63,9 +130,17 @@ export function InsuranceView() {
     if (!code || !name) return;
     setCreating(true);
     try {
-      await createInsurer({ code, name, is_active: true });
+      await createInsurer({
+        code,
+        name,
+        is_active: true,
+        traeger_vstrl: newTraegerVstrl.trim() || null,
+        traeger_bundesland: newTraegerBundesland.trim() || null,
+      });
       setNewCode("");
       setNewName("");
+      setNewTraegerVstrl("");
+      setNewTraegerBundesland("");
       reloadInsurers();
     } catch {
       toast.error(t("loadError"));
@@ -77,6 +152,20 @@ export function InsuranceView() {
   const saveInsurerName = async (id: string, name: string) => {
     try {
       const updated = await updateInsurer(id, { name });
+      setInsurers((prev) => prev.map((i) => (i.id === id ? updated : i)));
+    } catch {
+      toast.error(t("loadError"));
+      reloadInsurers();
+    }
+  };
+
+  const saveInsurerTraeger = async (
+    id: string,
+    field: "traeger_vstrl" | "traeger_bundesland",
+    value: string,
+  ) => {
+    try {
+      const updated = await updateInsurer(id, { [field]: value || null });
       setInsurers((prev) => prev.map((i) => (i.id === id ? updated : i)));
     } catch {
       toast.error(t("loadError"));
@@ -197,6 +286,55 @@ export function InsuranceView() {
     <div>
       <PageHeader title={t("title")} />
 
+      {/* 0. DVP settings */}
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-slate-900">{t("dvpSettings")}</h2>
+        {loadingDvp ? (
+          <p className="mt-4 text-sm text-slate-500">{tc("loading")}</p>
+        ) : dvpError ? (
+          <p className="mt-4 text-sm text-red-600">{t("loadError")}</p>
+        ) : (
+          <Card className="mt-4 p-5">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Field label={t("repro")}>
+                <Input
+                  value={dvpForm.repro}
+                  onChange={(e) => setDvpForm((prev) => ({ ...prev, repro: e.target.value }))}
+                />
+              </Field>
+              <Field label={t("versi")}>
+                <Input
+                  value={dvpForm.versi}
+                  onChange={(e) => setDvpForm((prev) => ({ ...prev, versi: e.target.value }))}
+                />
+              </Field>
+              <Field label={t("versd")}>
+                <Input
+                  value={dvpForm.versd}
+                  onChange={(e) => setDvpForm((prev) => ({ ...prev, versd: e.target.value }))}
+                />
+              </Field>
+              <Field label={t("testMode")}>
+                <label className="flex h-10 items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={dvpForm.test_mode}
+                    onChange={(e) => setDvpForm((prev) => ({ ...prev, test_mode: e.target.checked }))}
+                  />
+                  {t("testMode")}
+                </label>
+              </Field>
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <Button disabled={savingDvp} onClick={() => void saveDvpSettings()}>
+                {t("save")}
+              </Button>
+              {dvpSaved && <span className="text-sm text-emerald-600">{t("saved")}</span>}
+            </div>
+          </Card>
+        )}
+      </section>
+
       {/* 1. Insurers */}
       <section className="mt-8">
         <h2 className="text-lg font-semibold text-slate-900">{t("insurers")}</h2>
@@ -211,6 +349,8 @@ export function InsuranceView() {
                 <Tr>
                   <Th>{t("code")}</Th>
                   <Th>{t("name")}</Th>
+                  <Th>{t("traegerVstrl")}</Th>
+                  <Th>{t("traegerBundesland")}</Th>
                   <Th>{t("active")}</Th>
                 </Tr>
               </THead>
@@ -236,6 +376,32 @@ export function InsuranceView() {
                       />
                     </Td>
                     <Td onClick={(e) => e.stopPropagation()}>
+                      <Input
+                        key={`${row.id}-vstrl-${row.traeger_vstrl ?? ""}`}
+                        defaultValue={row.traeger_vstrl ?? ""}
+                        maxLength={2}
+                        className="w-20"
+                        onBlur={(e) => {
+                          const value = e.target.value.trim();
+                          if (value !== (row.traeger_vstrl ?? ""))
+                            void saveInsurerTraeger(row.id, "traeger_vstrl", value);
+                        }}
+                      />
+                    </Td>
+                    <Td onClick={(e) => e.stopPropagation()}>
+                      <Input
+                        key={`${row.id}-blnd-${row.traeger_bundesland ?? ""}`}
+                        defaultValue={row.traeger_bundesland ?? ""}
+                        maxLength={1}
+                        className="w-16"
+                        onBlur={(e) => {
+                          const value = e.target.value.trim();
+                          if (value !== (row.traeger_bundesland ?? ""))
+                            void saveInsurerTraeger(row.id, "traeger_bundesland", value);
+                        }}
+                      />
+                    </Td>
+                    <Td onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={row.is_active}
@@ -257,6 +423,24 @@ export function InsuranceView() {
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       placeholder={t("name")}
+                    />
+                  </Td>
+                  <Td>
+                    <Input
+                      value={newTraegerVstrl}
+                      onChange={(e) => setNewTraegerVstrl(e.target.value)}
+                      placeholder={t("traegerVstrl")}
+                      maxLength={2}
+                      className="w-20"
+                    />
+                  </Td>
+                  <Td>
+                    <Input
+                      value={newTraegerBundesland}
+                      onChange={(e) => setNewTraegerBundesland(e.target.value)}
+                      placeholder={t("traegerBundesland")}
+                      maxLength={1}
+                      className="w-16"
                     />
                   </Td>
                   <Td>
