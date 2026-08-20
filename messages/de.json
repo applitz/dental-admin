@@ -515,7 +515,9 @@
     "insurerDeleted": "Kasse gelöscht.",
     "deleteFailed": "Löschen fehlgeschlagen. Bitte erneut versuchen.",
     "upload": "Hochladen",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "perProvince": "VSTRL je Bundesland",
+    "perProvinceHint": "Kein einheitlicher nationaler Trägercode — der Träger (VSTRL) wird je Patient aus dem Bundesland ermittelt (z. B. ÖGK-Landesstellen 11–19). Festen Code leer lassen."
   },
   "mail": {
     "inbox": "Posteingang",

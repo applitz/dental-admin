@@ -36,6 +36,7 @@ export function CountryInsurance({ country }: { country: string }) {
   const [newName, setNewName] = useState("");
   const [newTraegerVstrl, setNewTraegerVstrl] = useState("");
   const [newTraegerBundesland, setNewTraegerBundesland] = useState("");
+  const [newPerProvince, setNewPerProvince] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const reloadInsurers = useCallback(() => {
@@ -62,11 +63,13 @@ export function CountryInsurance({ country }: { country: string }) {
         is_active: true,
         traeger_vstrl: newTraegerVstrl.trim() || null,
         traeger_bundesland: newTraegerBundesland.trim() || null,
+        vstrl_per_province: newPerProvince,
       });
       setNewCode("");
       setNewName("");
       setNewTraegerVstrl("");
       setNewTraegerBundesland("");
+      setNewPerProvince(false);
       reloadInsurers();
     } catch {
       toast.error(t("loadError"));
@@ -78,6 +81,16 @@ export function CountryInsurance({ country }: { country: string }) {
   const saveInsurerName = async (id: string, name: string) => {
     try {
       const updated = await updateInsurer(id, { name });
+      setInsurers((prev) => prev.map((i) => (i.id === id ? updated : i)));
+    } catch {
+      toast.error(t("loadError"));
+      reloadInsurers();
+    }
+  };
+
+  const saveInsurerPerProvince = async (id: string, value: boolean) => {
+    try {
+      const updated = await updateInsurer(id, { vstrl_per_province: value });
       setInsurers((prev) => prev.map((i) => (i.id === id ? updated : i)));
     } catch {
       toast.error(t("loadError"));
@@ -255,6 +268,7 @@ export function CountryInsurance({ country }: { country: string }) {
                   <Th>{t("name")}</Th>
                   <Th>{t("traegerVstrl")}</Th>
                   <Th>{t("traegerBundesland")}</Th>
+                  <Th>{t("perProvince")}</Th>
                   <Th>{t("active")}</Th>
                   <Th className="text-right" />
                 </Tr>
@@ -286,6 +300,8 @@ export function CountryInsurance({ country }: { country: string }) {
                         defaultValue={row.traeger_vstrl ?? ""}
                         maxLength={2}
                         className="w-20"
+                        disabled={row.vstrl_per_province}
+                        title={row.vstrl_per_province ? t("perProvinceHint") : undefined}
                         onBlur={(e) => {
                           const value = e.target.value.trim();
                           if (value !== (row.traeger_vstrl ?? ""))
@@ -304,6 +320,14 @@ export function CountryInsurance({ country }: { country: string }) {
                           if (value !== (row.traeger_bundesland ?? ""))
                             void saveInsurerTraeger(row.id, "traeger_bundesland", value);
                         }}
+                      />
+                    </Td>
+                    <Td onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={row.vstrl_per_province}
+                        title={t("perProvinceHint")}
+                        onChange={(e) => void saveInsurerPerProvince(row.id, e.target.checked)}
                       />
                     </Td>
                     <Td onClick={(e) => e.stopPropagation()}>
@@ -366,6 +390,14 @@ export function CountryInsurance({ country }: { country: string }) {
                       placeholder={t("traegerBundesland")}
                       maxLength={1}
                       className="w-16"
+                    />
+                  </Td>
+                  <Td>
+                    <input
+                      type="checkbox"
+                      checked={newPerProvince}
+                      title={t("perProvinceHint")}
+                      onChange={(e) => setNewPerProvince(e.target.checked)}
                     />
                   </Td>
                   <Td>

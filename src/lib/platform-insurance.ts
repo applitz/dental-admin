@@ -9,6 +9,9 @@ export type InsurerAdmin = {
   is_active: boolean;
   traeger_vstrl: string | null;
   traeger_bundesland: string | null;
+  /** No single national carrier code — VSTRL is a regional office resolved per
+   *  patient from their province (e.g. Austria's ÖGK Landesstellen 11–19). */
+  vstrl_per_province: boolean;
 };
 export type DvpSettings = { repro: string | null; versi: string | null; versd: string; test_mode: boolean };
 export type ShareRule = { share_category: "prosthetics" | "ortho"; kind: "percent" | "fixed"; value: string };
@@ -30,6 +33,7 @@ export function createInsurer(body: {
   is_active?: boolean;
   traeger_vstrl?: string | null;
   traeger_bundesland?: string | null;
+  vstrl_per_province?: boolean;
 }): Promise<InsurerAdmin> {
   return apiFetch("/api/v1/platform/insurance/insurers", { method: "POST", body: JSON.stringify(body) });
 }
@@ -40,6 +44,7 @@ export function updateInsurer(
     is_active?: boolean;
     traeger_vstrl?: string | null;
     traeger_bundesland?: string | null;
+    vstrl_per_province?: boolean;
   },
 ): Promise<InsurerAdmin> {
   return apiFetch(`/api/v1/platform/insurance/insurers/${id}`, { method: "PATCH", body: JSON.stringify(body) });

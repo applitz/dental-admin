@@ -515,7 +515,9 @@
     "insurerDeleted": "Company deleted.",
     "deleteFailed": "Couldn't delete. Try again.",
     "upload": "Upload",
-    "delete": "Delete"
+    "delete": "Delete",
+    "perProvince": "Per-province VSTRL",
+    "perProvinceHint": "No single national carrier code — the carrier (VSTRL) is resolved per patient from their province (e.g. Austria's ÖGK Landesstellen 11–19). Leave the fixed code blank."
   },
   "mail": {
     "inbox": "Inbox",
