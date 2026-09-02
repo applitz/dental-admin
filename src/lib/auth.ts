@@ -54,13 +54,26 @@ export function hasGateAccess(): boolean {
   return Boolean(getGateToken());
 }
 
-export function clinicLoginUrl(locale = "en", options?: { reauth?: boolean }): string {
+export function clinicLoginUrl(
+  locale = "en",
+  options?: { reauth?: boolean; logout?: boolean },
+): string {
   const base = process.env.NEXT_PUBLIC_CLINIC_APP_URL ?? "http://localhost:3000";
   const url = `${base.replace(/\/$/, "")}/${locale}/login`;
+  // `logout` = an EXPLICIT leave (Sign out / Back to login / expired session):
+  // the clinic login must CLEAR its session and show the form. `reauth` = a
+  // PASSIVE bounce (opening the admin with no admin session): the clinic login
+  // must NOT nuke a valid clinic session, just route it (AUTH-REAUTH-01). Using
+  // the same ?reauth=1 for both made "Back to login" loop straight back to the
+  // gate, because a valid admin session was routed right back in.
+  if (options?.logout) return `${url}?logout=1`;
   return options?.reauth ? `${url}?reauth=1` : url;
 }
 
-export function redirectToClinicLogin(locale = "en", options?: { reauth?: boolean }): void {
+export function redirectToClinicLogin(
+  locale = "en",
+  options?: { reauth?: boolean; logout?: boolean },
+): void {
   clearSession();
   window.location.href = clinicLoginUrl(locale, options);
 }

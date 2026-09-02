@@ -55,7 +55,8 @@ export default function ChallengePage() {
     } catch (err) {
       const key = gateChallengeErrorKey(err);
       if (key === "sessionExpired" || key === "forbidden") {
-        redirectToClinicLogin(locale, { reauth: true });
+        // The clinic session behind the admin is invalid → show the login form.
+        redirectToClinicLogin(locale, { logout: true });
         return;
       }
       setError(t(key));
@@ -88,7 +89,7 @@ export default function ChallengePage() {
           type="button"
           variant="ghost"
           className="mt-2 w-full"
-          onClick={() => redirectToClinicLogin(locale, { reauth: true })}
+          onClick={() => redirectToClinicLogin(locale, { logout: true })}
           disabled={loading}
         >
           {t("backToLogin")}

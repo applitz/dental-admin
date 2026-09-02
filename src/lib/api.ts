@@ -70,8 +70,9 @@ export async function apiFetch<T>(
     // `skipAuthRedirect` lets the challenge flow surface a wrong-secret 401 itself.
     if (!init.skipAuthRedirect && typeof window !== "undefined") {
       if (res.status === 401) {
-        // Access token expired/invalid → log out to the clinic login.
-        redirectToClinicLogin(localeFromPath(), { reauth: true });
+        // Access token expired/invalid → log out to the clinic login (show the
+        // form, don't silently route the stale session back into a 401 loop).
+        redirectToClinicLogin(localeFromPath(), { logout: true });
       } else if (res.status === 403 && err.body.code === "PLATFORM_GATE_REQUIRED") {
         // Platform gate token expired → re-enter the gate secret.
         redirectToChallenge(localeFromPath());

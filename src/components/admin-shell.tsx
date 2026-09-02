@@ -139,7 +139,7 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
             variant="ghost"
             size="sm"
             className="w-full justify-start text-white/85 hover:bg-white/10 hover:text-white"
-            onClick={() => redirectToClinicLogin(locale, { reauth: true })}
+            onClick={() => redirectToClinicLogin(locale, { logout: true })}
           >
             {t("common.signOut")}
           </Button>
