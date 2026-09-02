@@ -127,7 +127,10 @@
       "intervalLabel": {
         "month": "Monatlich",
         "year": "Jährlich"
-      }
+      },
+      "validUntil": "Gültig bis",
+      "effectiveFree": "Free",
+      "expiredToFree": "Abgelaufen → Free ({date})"
     },
     "comms": {
       "title": "Kommunikation",

@@ -360,29 +360,66 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
               )}
             </div>
             {detail.subscription ? (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <InfoCard label={t("subscription.plan")} value={detail.subscription.plan_slug ?? "—"} />
-                <InfoCard
-                  label={t("subscription.status")}
-                  valueNode={
-                    <Badge tone={subscriptionStatusTone(detail.subscription.status)}>
-                      {subscriptionStatusLabel(t, detail.subscription.status)}
-                    </Badge>
-                  }
-                />
-                <InfoCard
-                  label={t("subscription.interval")}
-                  value={
-                    detail.subscription.interval === "month"
-                      ? t("subscription.intervalLabel.month")
-                      : detail.subscription.interval === "year"
-                        ? t("subscription.intervalLabel.year")
-                        : (detail.subscription.interval ?? "—")
-                  }
-                />
-                <InfoCard label={t("subscription.amount")} value={formatAmount(detail.subscription.amount, detail.subscription.currency, locale)} />
-                <InfoCard label={t("subscription.currentPeriodEnd")} value={formatDate(detail.subscription.current_period_end, locale)} />
-              </div>
+              (() => {
+                // ADMIN-SUB-EXPIRE-01: a paid plan whose period has passed no longer
+                // entitles the tenant (they drop to Free), but the stored status can
+                // still read "active". Compute the EFFECTIVE state against period-end
+                // so the card matches the tenant's real entitlements.
+                const periodEndMs = detail.subscription.current_period_end
+                  ? new Date(detail.subscription.current_period_end).getTime()
+                  : null;
+                const expired =
+                  periodEndMs != null &&
+                  periodEndMs < Date.now() &&
+                  (detail.subscription.status === "active" ||
+                    detail.subscription.status === "pending");
+                return (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <InfoCard
+                      label={t("subscription.plan")}
+                      valueNode={
+                        expired ? (
+                          <span className="text-slate-700">
+                            {t("subscription.effectiveFree")}{" "}
+                            <span className="text-slate-400">
+                              ({detail.subscription.plan_slug})
+                            </span>
+                          </span>
+                        ) : undefined
+                      }
+                      value={expired ? undefined : (detail.subscription.plan_slug ?? "—")}
+                    />
+                    <InfoCard
+                      label={t("subscription.status")}
+                      valueNode={
+                        expired ? (
+                          <Badge tone="warn">
+                            {t("subscription.expiredToFree", {
+                              date: formatDate(detail.subscription.current_period_end, locale),
+                            })}
+                          </Badge>
+                        ) : (
+                          <Badge tone={subscriptionStatusTone(detail.subscription.status)}>
+                            {subscriptionStatusLabel(t, detail.subscription.status)}
+                          </Badge>
+                        )
+                      }
+                    />
+                    <InfoCard
+                      label={t("subscription.interval")}
+                      value={
+                        detail.subscription.interval === "month"
+                          ? t("subscription.intervalLabel.month")
+                          : detail.subscription.interval === "year"
+                            ? t("subscription.intervalLabel.year")
+                            : (detail.subscription.interval ?? "—")
+                      }
+                    />
+                    <InfoCard label={t("subscription.amount")} value={formatAmount(detail.subscription.amount, detail.subscription.currency, locale)} />
+                    <InfoCard label={t("subscription.validUntil")} value={formatValidUntil(detail.subscription.current_period_end, locale)} />
+                  </div>
+                );
+              })()
             ) : (
               <p className="mt-3 text-sm text-slate-500">{t("subscription.none")}</p>
             )}
@@ -739,4 +776,23 @@ function formatDate(value: string | null, locale: string): string {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
   return new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric" }).format(d);
+}
+
+// ADMIN-DATE-OFFSET-01: the stored period_end is the EXCLUSIVE end (the entered
+// "valid until" date + 1 day at UTC midnight — a plan valid *through* that day).
+// Show the INCLUSIVE last-valid day so the date the admin entered round-trips
+// exactly (entered Aug 15 -> shows Aug 15, not Aug 16), formatted as a plain
+// calendar date with no browser-tz shift.
+function formatValidUntil(value: string | null, locale: string): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  // Take the UTC calendar date and step back one day (the inclusive last day).
+  const inclusive = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - 1));
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(inclusive);
 }
