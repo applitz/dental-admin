@@ -10,7 +10,6 @@ import {
 } from "@/lib/auth";
 import { fetchGateStatus, verifyPlatformGate } from "@/lib/api";
 import { gateChallengeErrorKey } from "@/lib/gate-errors";
-import { Shield } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -68,8 +67,9 @@ export default function ChallengePage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-dental-900 via-dental-700 to-slate-900 p-6">
       <form onSubmit={onSubmit} className="w-full max-w-md rounded-2xl border border-white/10 bg-white p-8 shadow-xl">
-        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-dental-50 text-dental-600">
-          <Shield className="h-6 w-6" />
+        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-dental-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/vodett-mark.svg" alt="Vodett" className="h-7 w-7" />
         </div>
         <h1 className="text-xl font-semibold text-slate-900">{t("title")}</h1>
         <p className="mt-2 text-sm text-slate-500">{t("subtitle")}</p>

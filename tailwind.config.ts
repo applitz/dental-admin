@@ -3,23 +3,23 @@ import type { Config } from "tailwindcss";
 /**
  * Design tokens for the Vodett admin panel.
  *
- * `dental` is the shared Vodett brand blue (primary 600 = #0284c7), matching
+ * `dental` is the shared Vodett brand green (primary 600 = #15B396), matching
  * dental-web / dental-patient so every Vodett surface reads as one product.
  * `admin` is kept as an alias of the same ramp so any legacy `admin-*` class
  * still renders on-brand during/after the migration — no orphaned indigo.
  */
 const brand = {
-  50: "#f0f9ff",
-  100: "#e0f2fe",
-  200: "#bae6fd",
-  300: "#7dd3fc",
-  400: "#38bdf8",
-  500: "#0ea5e9",
-  600: "#0284c7",
-  700: "#0369a1",
-  800: "#075985",
-  900: "#0c4a6e",
-  DEFAULT: "#0284c7",
+  50: "#EAF8F4",
+  100: "#CBEFE7",
+  200: "#9CE0D2",
+  300: "#66CFBB",
+  400: "#31C3A8",
+  500: "#1BC0A0",
+  600: "#15B396",
+  700: "#118F79",
+  800: "#0C6B5A",
+  900: "#094F44",
+  DEFAULT: "#15B396",
 } as const;
 
 const config: Config = {
