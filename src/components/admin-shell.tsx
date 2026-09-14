@@ -105,7 +105,7 @@ export function AdminShell({ initialView }: { initialView: AdminView }) {
       <aside className="flex w-60 shrink-0 flex-col overflow-y-auto bg-gradient-to-b from-dental-700 to-dental-900 text-white">
         <div className="flex h-16 items-center gap-2 border-b border-white/10 px-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/vodett-logo-white.svg" alt={t("common.appName")} className="h-7 w-auto" />
+          <img src="/vodett-logo-white.svg" alt={t("common.appName")} className="h-9 w-auto" />
         </div>
         <nav className="flex-1 space-y-0.5 p-3">
           {NAV.map(({ id, href, icon: Icon }) => {
