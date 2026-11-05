@@ -98,6 +98,12 @@ export type InsurerServiceAdmin = {
   valid_from: string | null;
   valid_to: string | null;
   is_active: boolean;
+  chart_text: string | null;
+  invoice_text: string | null;
+  description: string | null;
+  /** Tooth status auto-applied when the service is added to a tooth. */
+  tooth_condition: string | null;
+  color: string | null;
 };
 
 export function listInsurerServices(insurerId: string): Promise<InsurerServiceAdmin[]> {

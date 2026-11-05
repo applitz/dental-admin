@@ -467,6 +467,7 @@ export function CountryInsurance({ country }: { country: string }) {
                       <Th>{t("price")}</Th>
                       <Th>{t("colPatientShare")}</Th>
                       <Th>{t("colAge")}</Th>
+                      <Th>{t("colToothStatus")}</Th>
                       <Th>{t("active")}</Th>
                     </Tr>
                   </THead>
@@ -491,13 +492,26 @@ export function CountryInsurance({ country }: { country: string }) {
                             : `${s.age_min ?? ""}–${s.age_max ?? ""}`}
                         </Td>
                         <Td>
+                          {s.tooth_condition ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <span
+                                className="h-2 w-2 rounded-full ring-1 ring-inset ring-black/10"
+                                style={{ backgroundColor: s.color ?? "#94a3b8" }}
+                              />
+                              {s.tooth_condition}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </Td>
+                        <Td>
                           <input type="checkbox" checked={s.is_active} readOnly />
                         </Td>
                       </Tr>
                     ))}
                     {services.length === 0 && (
                       <Tr>
-                        <Td colSpan={8} className="px-4 py-12 text-center text-slate-500">
+                        <Td colSpan={9} className="px-4 py-12 text-center text-slate-500">
                           {t("noServices")}
                         </Td>
                       </Tr>

@@ -512,6 +512,7 @@
     "colDvpCode": "DVP-Code",
     "colPatientShare": "Selbstbehalt",
     "colAge": "Alter",
+    "colToothStatus": "Zahnstatus",
     "selectInsurerForServices": "Oben in der Kassenliste eine Kasse auswählen (auf den Code klicken), um die Vorlage herunterzuladen und Leistungen hochzuladen.",
     "servicesHint": "Unten eine Kasse hinzufügen und dann über deren Hochladen-Schaltfläche die Leistungen aus der Vorlage laden.",
     "deleteInsurerConfirm": "{name} und alle Leistungen löschen? Kann nicht rückgängig gemacht werden.",
