@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/tabs";
 import { TableCard, Table, THead, TBody, Tr, Th, Td } from "@/components/ui/table";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Field } from "@/components/ui/field";
@@ -440,11 +441,7 @@ export function TenantDetailPanel({ detail, onUpdated, onDeleted }: Props) {
                   </Select>
                 </Field>
                 <Field label={t("subscription.assignUntil")} className="w-44">
-                  <Input
-                    type="date"
-                    value={assignUntil}
-                    onChange={(e) => setAssignUntil(e.target.value)}
-                  />
+                  <DateInput value={assignUntil} onChange={setAssignUntil} />
                 </Field>
                 <Button
                   size="sm"
